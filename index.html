@@ -12,6 +12,22 @@
 <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js"></script>
 
 <style>
+  /* สีสำหรับวันเสาร์ (สีฟ้าอ่อน) */
+.cal-day.saturday { background: #F4F9FF; border-color: #D3E4F6; }
+.cal-day.saturday .day-num { color: #185FA5; }
+.cal-day.saturday:hover { border-color: #185FA5; }
+
+/* สีสำหรับวันอาทิตย์ และ วันหยุดราชการ (สีแดงอ่อน) */
+.cal-day.sunday, .cal-day.holiday { background: #FFF5F5; border-color: #F9C8C8; }
+.cal-day.sunday .day-num, .cal-day.holiday .day-num { color: #A32D2D; }
+.cal-day.sunday:hover, .cal-day.holiday:hover { border-color: #A32D2D; }
+
+/* ป้ายชื่อวันหยุด */
+.holiday-lbl { font-size: 10px; color: #A32D2D; background: #FFEAEA; padding: 2px 4px; border-radius: 4px; text-align: center; margin-bottom: 4px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* ปรับสีส่วนหัวปฏิทิน */
+.cal-hcell.sat { color: #185FA5; }
+.cal-hcell.sun { color: #A32D2D; }
 /* CSS คงเดิมทั้งหมด */
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'Sarabun',sans-serif;background:#F2F4F3;color:#1a1a1a;min-height:100vh}
@@ -378,9 +394,35 @@ const AppState = {
 const CONSTANTS = {
   COLORS: ['#0F6E56','#185FA5','#BA7517','#A32D2D','#993556','#533AB7','#3B6D11','#0E7490'],
   DAYS_TH: ['อา','จ','อ','พ','พฤ','ศ','ส'],
-  MONTHS_TH: ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม']
+  MONTHS_TH: ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'],
+  
+  // เพิ่มข้อมูลวันหยุดราชการตรงนี้
+  HOLIDAYS_TH: {
+    // วันหยุดแบบ Fix วันที่ (เดือน-วัน)
+    '01-01': 'วันขึ้นปีใหม่',
+    '04-06': 'วันจักรี',
+    '04-13': 'วันสงกรานต์',
+    '04-14': 'วันสงกรานต์',
+    '04-15': 'วันสงกรานต์',
+    '05-01': 'วันแรงงาน',
+    '05-04': 'วันฉัตรมงคล',
+    '06-03': 'วันเฉลิมฯ พระราชินี',
+    '07-28': 'วันเฉลิมฯ ร.10',
+    '08-12': 'วันแม่แห่งชาติ',
+    '10-13': 'วันนวมินทรมหาราช',
+    '10-23': 'วันปิยมหาราช',
+    '12-05': 'วันพ่อแห่งชาติ',
+    '12-10': 'วันรัฐธรรมนูญ',
+    '12-31': 'วันสิ้นปี',
+    
+    // วันหยุดทางศาสนา/ชดเชยที่เปลี่ยนไปทุกปี (ใช้รูปแบบ ปี-เดือน-วัน) ตัวอย่างปี 2026 (2569)
+    '2026-03-03': 'วันมาฆบูชา',
+    '2026-05-31': 'วันวิสาขบูชา',
+    '2026-06-01': 'ชดเชยวันวิสาขบูชา',
+    '2026-07-29': 'วันอาสาฬหบูชา',
+    '2026-07-30': 'วันเข้าพรรษา'
+  }
 };
-
 // ==================== FIREBASE INIT ====================
 // ⚠️ เปลี่ยนค่าเหล่านี้เป็น Project Firebase ของคุณ ⚠️
 const firebaseConfig = {
@@ -615,12 +657,17 @@ function renderStats() {
   container.appendChild(frag);
 }
 
-function renderCalendar() {
+funfunction renderCalendar() {
   const hdr = document.getElementById('cal-header');
   const hdrFrag = document.createDocumentFragment();
-  CONSTANTS.DAYS_TH.forEach(d => {
+  
+  // 1. วาดส่วนหัวของวัน (จันทร์-อาทิตย์ พร้อมสีวันหยุด)
+  CONSTANTS.DAYS_TH.forEach((d, index) => {
     const div = document.createElement('div');
-    div.className = 'cal-hcell';
+    let hClass = 'cal-hcell';
+    if (index === 0) hClass += ' sun'; // วันอาทิตย์
+    if (index === 6) hClass += ' sat'; // วันเสาร์
+    div.className = hClass;
     div.textContent = d;
     hdrFrag.appendChild(div);
   });
@@ -636,6 +683,7 @@ function renderCalendar() {
   const calGrid = document.getElementById('cal-grid');
   const gridFrag = document.createDocumentFragment();
   
+  // 2. เติมช่องว่างของเดือนก่อนหน้า
   for (let i = 0; i < first; i++) {
     const d = new Date(AppState.ui.curYear, AppState.ui.curMonth, 0 - first + i + 2);
     const div = document.createElement('div');
@@ -644,18 +692,35 @@ function renderCalendar() {
     gridFrag.appendChild(div);
   }
   
+  // 3. วาดวันที่ของเดือนปัจจุบัน
   for (let d = 1; d <= days; d++) {
     const isToday = today.getFullYear() === AppState.ui.curYear && today.getMonth() === AppState.ui.curMonth && today.getDate() === d;
     const ds = `${AppState.ui.curYear}-${String(AppState.ui.curMonth + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-    const dayEvts = AppState.events.filter(e => e.date === ds || (e.endDate && ds >= e.date && ds <= e.endDate));
+    const shortDs = `${String(AppState.ui.curMonth + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
     
+    // ดึงข้อมูลกิจกรรม
+    const dayEvts = AppState.events.filter(e => e.date === ds || (e.endDate && ds >= e.date && ds <= e.endDate));
     const dots = dayEvts.slice(0, 2).map(e => `<div class="ev-dot"><div class="dot" style="background:${e.color}"></div><span>${e.name}</span></div>`).join('');
     const more = dayEvts.length > 2 ? `<div style="font-size:9px;color:#888">+${dayEvts.length - 2} อื่นๆ</div>` : '';
     
+    // เช็ควันหยุดราชการ (เช็คแบบ ปี-เดือน-วัน ก่อน ถ้าไม่มีค่อยหาแบบ เดือน-วัน)
+    const holidayName = CONSTANTS.HOLIDAYS_TH[ds] || CONSTANTS.HOLIDAYS_TH[shortDs];
+    const dayOfWeek = new Date(AppState.ui.curYear, AppState.ui.curMonth, d).getDay();
+    
+    // กำหนด Class สีให้ปฏิทิน
+    let classNames = 'cal-day';
+    if (holidayName) classNames += ' holiday';
+    else if (dayOfWeek === 0) classNames += ' sunday';
+    else if (dayOfWeek === 6) classNames += ' saturday';
+    if (isToday) classNames += ' today';
+    
+    // สร้างแท็กชื่อวันหยุด (ถ้ามี)
+    const holidayBadge = holidayName ? `<div class="holiday-lbl" title="${holidayName}">${holidayName}</div>` : '';
+
     const div = document.createElement('div');
-    div.className = `cal-day${isToday ? ' today' : ''}`;
+    div.className = classNames;
     div.onclick = () => jumpToDay(ds);
-    div.innerHTML = `<div class="day-num">${d}</div>${dots}${more}`;
+    div.innerHTML = `<div class="day-num">${d}</div>${holidayBadge}${dots}${more}`;
     gridFrag.appendChild(div);
   }
   
