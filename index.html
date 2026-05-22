@@ -420,6 +420,7 @@ function toggleAuth() {
   }
 }
 
+// ==================== AUTH & DATA FETCHING ====================
 auth.onAuthStateChanged(user => {
   AppState.user = user;
   const loginBtn = document.getElementById('btn-login');
@@ -436,6 +437,7 @@ auth.onAuthStateChanged(user => {
     else btnAddTeacher.style.display = 'flex';
     
     showToast(`ยินดีต้อนรับ ${user.displayName}`);
+    loadTeachersData(); // โหลดข้อมูลครูเมื่อล็อกอินสำเร็จ
   } else {
     loginBtn.innerHTML = `<i class="ti ti-login"></i> <span id="login-text">เข้าสู่ระบบ</span>`;
     loginBtn.style.color = '#0F6E56';
@@ -443,11 +445,120 @@ auth.onAuthStateChanged(user => {
     
     btnAddEvent.style.display = 'none';
     btnAddTeacher.style.display = 'none';
+    
+    // ล้างข้อมูลครูออกจากหน่วยความจำเมื่อล็อกเอาท์
+    AppState.teachers = []; 
+    if (!isEventPage) renderTeachers();
   }
   
   if (isEventPage) renderAllEvents();
-  else renderTeachers();
 });
+
+// ฟังก์ชันดึงข้อมูลตอนเปิดเว็บครั้งแรก (ดึงแค่กิจกรรม)
+async function initData() {
+  try {
+    const eventsSnapshot = await db.collection('events').get();
+    AppState.events = eventsSnapshot.docs.map(doc => doc.data());
+
+    document.getElementById('loading-overlay').style.display = 'none';
+    renderAllEvents();
+  } catch (error) {
+    console.error("Error loading events:", error);
+    document.getElementById('loading-overlay').style.display = 'none';
+  }
+}
+
+// ฟังก์ชันดึงข้อมูลครู (จะทำงานก็ต่อเมื่อล็อกอินแล้วเท่านั้น)
+async function loadTeachersData() {
+  if (!AppState.user) return;
+  try {
+    const snap = await db.collection('teachers').get();
+    AppState.teachers = snap.docs.map(doc => doc.data());
+    
+    if (document.getElementById('page-teachers').classList.contains('active')) {
+      renderTeacherStats();
+      renderTeachers();
+    }
+  } catch (error) {
+    console.error("Error loading teachers:", error);
+  }
+}
+
+// ==================== TEACHERS RENDERING (แบบมีระบบล็อค) ====================
+function renderTeachers() {
+  const grid = document.getElementById('teacher-grid');
+  const toolbar = document.querySelector('.teacher-toolbar');
+  const statsBar = document.getElementById('teacher-stats-bar');
+
+  // ถ้ายังไม่ได้ล็อกอิน ให้ซ่อนเครื่องมือและโชว์หน้ากุญแจล็อค
+  if (!AppState.user) {
+    if(toolbar) toolbar.style.display = 'none';
+    if(statsBar) statsBar.style.display = 'none';
+    
+    grid.innerHTML = `
+      <div class="empty-state" style="grid-column:1/-1; padding: 6rem 1rem;">
+        <i class="ti ti-lock-square" style="font-size:56px; display:block; margin-bottom:15px; color:#ccc;"></i>
+        <h3 style="color:#333; margin-bottom:8px; font-size: 18px;">ข้อมูลสงวนสิทธิ์เฉพาะบุคลากร</h3>
+        <p style="color:#777;">กรุณาเข้าสู่ระบบด้วยบัญชี Google เพื่อดูทะเบียนข้อมูลครู</p>
+      </div>`;
+    return;
+  }
+
+  // ถ้าล็อกอินแล้ว ให้แสดงแถบเครื่องมือตามปกติ
+  if(toolbar) toolbar.style.display = 'flex';
+  if(statsBar) statsBar.style.display = 'grid';
+
+  const q = document.getElementById('teacher-search').value.trim().toLowerCase();
+  
+  AppState.pool = AppState.teachers.filter(t => {
+    if (AppState.ui.teacherType !== 'all' && t.type !== AppState.ui.teacherType) return false;
+    if (q) {
+      const fullName = `${t.name} ${t.surname} ${t.code} ${t.subject} ${t.major} ${t.role} ${t.nationality || ''}`.toLowerCase();
+      return fullName.includes(q);
+    }
+    return true;
+  });
+
+  document.getElementById('teacher-count').textContent = `พบ ${AppState.pool.length} คน`;
+  grid.innerHTML = '';
+
+  if (!AppState.pool.length) {
+    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><i class="ti ti-user-off" style="font-size:36px;display:block;margin-bottom:10px;color:#ddd"></i>ไม่พบข้อมูลครู</div>`;
+    return;
+  }
+
+  const frag = document.createDocumentFragment();
+  AppState.pool.forEach((t, i) => {
+    const avatarClass = t.type === 'retired' ? 't-avatar retired' : t.type === 'foreign' ? 't-avatar foreign' : 't-avatar';
+    const initials = t.type === 'foreign' ? t.name.split(' ').filter(w => w).map(w => w[0]).join('').slice(0, 2) : getInitials(t.name + ' ' + t.surname);
+    const badge = t.type === 'retired' ? `<span class="t-badge retired">ครูเกษียณ ${t.retiredYear || ''}</span>` : t.type === 'foreign' ? `<span class="t-badge foreign">${t.nationality || 'Foreign'}</span>` : '';
+    
+    const finalImgUrl = typeof getDriveImageUrl === 'function' ? getDriveImageUrl(t.imgUrl) : t.imgUrl;
+    const avatarContent = t.imgUrl ? `<img src="${esc(finalImgUrl)}" style="width:100%;height:100%;object-fit:cover;">` : initials;
+
+    const div = document.createElement('div');
+    div.className = 't-card';
+    div.dataset.idx = i;
+    div.innerHTML = `
+      <div class="t-card-header">
+        <div class="${avatarClass}">${avatarContent}</div>
+        <div>
+          <div class="t-name">${esc(t.name)}${t.surname ? ' ' + esc(t.surname) : ''}</div>
+          <div class="t-code">รหัส ${t.code} • อายุ ${t.age} ปี</div>
+          ${badge}
+        </div>
+      </div>
+      <div class="t-info">
+        ${t.subject ? `<div class="t-info-row"><i class="ti ti-book"></i><span>${esc(t.subject)}${t.level ? ' (' + esc(t.level) + ')' : ''}</span></div>` : ''}
+        ${t.role ? `<div class="t-info-row"><i class="ti ti-building"></i><span>${esc(t.role)}</span></div>` : ''}
+        ${t.major ? `<div class="t-info-row"><i class="ti ti-school"></i><span>${esc(t.major)}</span></div>` : ''}
+        ${t.phone && t.phone !== '-' ? `<div class="t-info-row"><i class="ti ti-phone"></i><span>${esc(t.phone)}</span></div>` : ''}
+      </div>
+    `;
+    frag.appendChild(div);
+  });
+  grid.appendChild(frag);
+}
 
 // ==================== DATA FETCHING (FIRESTORE) ====================
 async function initData() {
