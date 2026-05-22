@@ -4,240 +4,902 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>บอร์ดประชาสัมพันธ์ โรงเรียนพระมารดานิจจานุเคราะห์</title>
-<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Mitr:wght@300;400;500;600;700&family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
-<!-- Firebase SDK -->
 <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js"></script>
 
 <style>
-  /* สีสำหรับวันเสาร์ (สีฟ้าอ่อน) */
-.cal-day.saturday { background: #F4F9FF; border-color: #D3E4F6; }
-.cal-day.saturday .day-num { color: #185FA5; }
-.cal-day.saturday:hover { border-color: #185FA5; }
+:root {
+  --primary: #00A878;
+  --primary-dark: #007A57;
+  --primary-light: #E0F7F1;
+  --accent: #FF6B6B;
+  --accent2: #FFD166;
+  --accent3: #4ECDC4;
+  --blue: #118AB2;
+  --purple: #845EC2;
+  --bg: #F0F9F6;
+  --surface: #FFFFFF;
+  --border: rgba(0,168,120,0.15);
+  --text: #1A2E2A;
+  --text-soft: #5A7A74;
+  --shadow: 0 4px 24px rgba(0,168,120,0.12);
+  --shadow-lg: 0 12px 48px rgba(0,168,120,0.18);
+  --radius: 16px;
+  --radius-sm: 10px;
+}
 
-/* สีสำหรับวันอาทิตย์ และ วันหยุดราชการ (สีแดงอ่อน) */
-.cal-day.sunday, .cal-day.holiday { background: #FFF5F5; border-color: #F9C8C8; }
-.cal-day.sunday .day-num, .cal-day.holiday .day-num { color: #A32D2D; }
-.cal-day.sunday:hover, .cal-day.holiday:hover { border-color: #A32D2D; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
 
-/* ป้ายชื่อวันหยุด */
-.holiday-lbl { font-size: 10px; color: #A32D2D; background: #FFEAEA; padding: 2px 4px; border-radius: 4px; text-align: center; margin-bottom: 4px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+body {
+  font-family: 'Sarabun', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
 
-/* ปรับสีส่วนหัวปฏิทิน */
-.cal-hcell.sat { color: #185FA5; }
-.cal-hcell.sun { color: #A32D2D; }
-/* CSS คงเดิมทั้งหมด */
-*{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Sarabun',sans-serif;background:#F2F4F3;color:#1a1a1a;min-height:100vh}
-.topbar{background:#0F6E56;color:#fff;padding:0 1.5rem;height:60px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50;box-shadow:0 2px 10px rgba(0,0,0,0.2)}
-.topbar-brand{display:flex;align-items:center;gap:10px}
-.topbar-title{font-size:17px;font-weight:600}
-.topbar-sub{font-size:11px;opacity:0.8;margin-top:1px}
-.btn-add{display:flex;align-items:center;gap:6px;padding:8px 16px;background:#fff;color:#0F6E56;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Sarabun',sans-serif;transition:all 0.15s;white-space:nowrap}
-.btn-add:hover{background:#E1F5EE}
-.nav-tabs{background:#fff;border-bottom:1px solid #e5e5e5;padding:0 1.5rem;display:flex;gap:0;position:sticky;top:60px;z-index:40;box-shadow:0 1px 4px rgba(0,0,0,0.06)}
-.nav-tab{padding:14px 18px;font-size:14px;font-weight:500;cursor:pointer;color:#666;border-bottom:3px solid transparent;background:none;border-top:none;border-left:none;border-right:none;font-family:'Sarabun',sans-serif;display:flex;align-items:center;gap:7px;transition:all 0.15s;white-space:nowrap}
-.nav-tab.active{color:#0F6E56;border-bottom-color:#0F6E56}
-.nav-tab:hover{color:#1D9E75}
-.page{display:none;padding:1.5rem}
-.page.active{display:block}
-.container{max-width:1100px;margin:0 auto}
+/* ===== BG DECORATION ===== */
+body::before {
+  content: '';
+  position: fixed;
+  top: -200px; right: -200px;
+  width: 600px; height: 600px;
+  background: radial-gradient(circle, rgba(0,168,120,0.08) 0%, transparent 70%);
+  pointer-events: none; z-index: 0;
+}
+body::after {
+  content: '';
+  position: fixed;
+  bottom: -150px; left: -150px;
+  width: 500px; height: 500px;
+  background: radial-gradient(circle, rgba(78,205,196,0.07) 0%, transparent 70%);
+  pointer-events: none; z-index: 0;
+}
 
-/* Stats */
-.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:1.5rem}
-.stat-card{background:#fff;border-radius:10px;padding:14px 16px;text-align:center;border:0.5px solid #e0e0e0}
-.stat-num{font-size:26px;font-weight:700;color:#0F6E56}
-.stat-label{font-size:11px;color:#777;margin-top:3px}
+/* ===== TOPBAR ===== */
+.topbar {
+  background: linear-gradient(135deg, #007A57 0%, #00A878 50%, #00BFA5 100%);
+  color: #fff;
+  padding: 0 2rem;
+  height: 68px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky; top: 0; z-index: 50;
+  box-shadow: 0 4px 20px rgba(0,122,87,0.35);
+}
 
-/* Calendar */
-.cal-toolbar{display:flex;align-items:center;gap:12px;margin-bottom:1rem;flex-wrap:wrap}
-.month-nav button{background:#fff;border:0.5px solid #ccc;border-radius:8px;padding:7px 12px;cursor:pointer;font-family:'Sarabun',sans-serif;font-size:14px;color:#333;transition:background 0.1s}
-.month-nav button:hover{background:#f0f0f0}
-.month-label{font-size:18px;font-weight:700;color:#1a1a1a}
-.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}
-.cal-hcell{text-align:center;font-size:12px;font-weight:700;color:#666;padding:6px 0}
-.cal-day{min-height:80px;border-radius:8px;border:0.5px solid #e5e5e5;padding:7px;background:#fff;cursor:pointer;transition:all 0.15s}
-.cal-day:hover{border-color:#0F6E56;background:#FAFFFE}
-.cal-day.other-month{background:#f8f8f8;opacity:0.5}
-.cal-day.today{border-color:#0F6E56;border-width:2px}
-.day-num{font-size:12px;font-weight:700;color:#333;margin-bottom:4px}
-.cal-day.today .day-num{color:#0F6E56}
-.ev-dot{display:flex;align-items:center;gap:4px;margin-bottom:2px}
-.dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
-.ev-dot span{font-size:10px;color:#555;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100px}
+.topbar::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--accent2), var(--accent), var(--accent3), var(--primary));
+}
 
-/* Event list */
-.filter-bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:1rem}
-.fchip{font-size:12px;padding:5px 14px;border-radius:99px;border:0.5px solid #ccc;background:#fff;cursor:pointer;color:#555;font-family:'Sarabun',sans-serif;font-weight:500;transition:all 0.15s}
-.fchip.active{background:#0F6E56;color:#fff;border-color:#0F6E56}
-.fchip:hover:not(.active){background:#f0f0f0}
-.ev-list{display:flex;flex-direction:column;gap:10px}
-.ev-card{background:#fff;border:0.5px solid #e0e0e0;border-radius:12px;padding:14px 16px;display:flex;align-items:flex-start;gap:14px;transition:box-shadow 0.15s}
-.ev-card:hover{box-shadow:0 2px 12px rgba(0,0,0,0.08)}
-.ev-left{display:flex;flex-direction:column;align-items:center;min-width:52px;background:#E1F5EE;border-radius:8px;padding:10px 6px;text-align:center;flex-shrink:0}
-.ev-day{font-size:22px;font-weight:700;color:#0F6E56;line-height:1}
-.ev-month-lbl{font-size:10px;color:#1D9E75;margin-top:3px;font-weight:500}
-.ev-body{flex:1;min-width:0}
-.ev-title{font-size:15px;font-weight:600;color:#1a1a1a;margin-bottom:5px}
-.dept-badge{font-size:11px;padding:3px 10px;border-radius:8px;font-weight:500}
-.ev-desc{font-size:13px;color:#666;margin-top:5px;line-height:1.5}
-.file-chip{display:inline-flex;align-items:center;gap:5px;font-size:12px;color:#185FA5;background:#E6F1FB;padding:4px 10px;border-radius:8px;text-decoration:none;margin-top:6px;font-weight:500;transition:background 0.1s}
-.file-chip:hover{background:#cde2f7}
-.btn-actions{display:flex;gap:4px;flex-shrink:0}
-.btn-ic{background:none;border:none;cursor:pointer;padding:7px;border-radius:8px;font-size:16px;display:flex;align-items:center;justify-content:center;transition:all 0.15s;color:#999}
-.btn-ic.edit:hover{color:#185FA5;background:#E6F1FB}
-.btn-ic.del:hover{color:#c0392b;background:#fdecea}
-.empty-state{text-align:center;padding:4rem 1rem;color:#aaa;font-size:14px}
+.topbar-brand { display: flex; align-items: center; gap: 14px; }
 
-/* Teacher Directory */
-.teacher-toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:1.5rem}
-.search-box{display:flex;align-items:center;gap:8px;background:#fff;border:0.5px solid #ccc;border-radius:10px;padding:8px 14px;flex:1;min-width:220px;max-width:400px;transition:border-color 0.15s}
-.search-box:focus-within{border-color:#0F6E56;box-shadow:0 0 0 3px rgba(15,110,86,0.1)}
-.search-box i{color:#999;font-size:18px;flex-shrink:0}
-.search-box input{border:none;outline:none;font-family:'Sarabun',sans-serif;font-size:14px;background:none;width:100%;color:#1a1a1a}
-.teacher-type-tabs{display:flex;gap:6px;flex-wrap:wrap}
-.tt-tab{padding:7px 14px;font-size:13px;font-weight:500;border-radius:8px;border:0.5px solid #ccc;background:#fff;cursor:pointer;color:#666;font-family:'Sarabun',sans-serif;transition:all 0.15s}
-.tt-tab.active{background:#0F6E56;color:#fff;border-color:#0F6E56}
-.tt-tab:hover:not(.active){background:#f0f0f0}
-.teacher-count{font-size:13px;color:#888;white-space:nowrap;padding-top:2px}
-.teacher-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px}
-.t-card{background:#fff;border:0.5px solid #e0e0e0;border-radius:12px;padding:16px;transition:box-shadow 0.15s;cursor:pointer}
-.t-card:hover{box-shadow:0 3px 16px rgba(0,0,0,0.1);border-color:#b2d8ce}
-.t-card-header{display:flex;align-items:center;gap:12px;margin-bottom:10px}
-.t-avatar{width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#1D9E75,#0F6E56);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:#fff;flex-shrink:0;overflow:hidden}
-.t-avatar.retired{background:linear-gradient(135deg,#BA7517,#EF9F27)}
-.t-avatar.foreign{background:linear-gradient(135deg,#185FA5,#378ADD)}
-.t-name{font-size:15px;font-weight:600;color:#1a1a1a;line-height:1.3}
-.t-code{font-size:11px;color:#888;margin-top:2px}
-.t-badge{display:inline-block;font-size:10px;padding:2px 8px;border-radius:99px;margin-top:3px;font-weight:500}
-.t-badge.retired{background:#FEF3C7;color:#92400E}
-.t-badge.foreign{background:#DBEAFE;color:#1E40AF}
-.t-info{font-size:12px;color:#555;display:flex;flex-direction:column;gap:4px}
-.t-info-row{display:flex;align-items:flex-start;gap:6px}
-.t-info-row i{font-size:14px;color:#0F6E56;flex-shrink:0;margin-top:1px}
+.school-logo {
+  width: 44px; height: 44px;
+  background: rgba(255,255,255,0.2);
+  border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px;
+  backdrop-filter: blur(10px);
+  border: 1.5px solid rgba(255,255,255,0.3);
+  flex-shrink: 0;
+}
 
-/* Modals */
-.tmodal-bg{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);display:flex;align-items:flex-start;justify-content:center;z-index:200;padding:1rem;overflow-y:auto}
-.tmodal{background:#fff;border-radius:16px;width:100%;max-width:520px;padding:2rem;box-shadow:0 20px 60px rgba(0,0,0,0.25);position:relative;margin:auto}
-.tmodal-close{position:absolute;top:14px;right:14px;background:none;border:none;cursor:pointer;font-size:20px;color:#aaa;width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:50%;transition:all 0.15s}
-.tmodal-close:hover{background:#f0f0f0;color:#333}
-.tmodal-avatar{width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,#1D9E75,#0F6E56);display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:700;color:#fff;margin:0 auto 1rem;overflow:hidden}
-.tmodal-avatar.retired{background:linear-gradient(135deg,#BA7517,#EF9F27)}
-.tmodal-avatar.foreign{background:linear-gradient(135deg,#185FA5,#378ADD)}
-.tmodal-name{text-align:center;font-size:19px;font-weight:700;margin-bottom:4px}
-.tmodal-code{text-align:center;font-size:13px;color:#888;margin-bottom:1rem}
-.tmodal-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.tmodal-field{background:#F8FAF9;border-radius:8px;padding:10px 12px}
-.tmodal-field label{display:block;font-size:10px;color:#777;margin-bottom:3px;font-weight:600;text-transform:uppercase;letter-spacing:.03em}
-.tmodal-field p{font-size:13px;color:#1a1a1a;font-weight:500}
-.tmodal-field.full{grid-column:1/-1}
+.topbar-title {
+  font-family: 'Mitr', sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
 
-.modal-wrap{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.45);display:flex;align-items:center;justify-content:center;z-index:100;padding:1rem}
-.modal{background:#fff;border-radius:14px;width:100%;max-width:500px;padding:1.75rem;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.2)}
-.modal h3{font-size:17px;font-weight:600;margin-bottom:1.25rem}
-.field{margin-bottom:1rem}
-.field label{display:block;font-size:13px;color:#555;margin-bottom:5px;font-weight:500}
-.field input,.field select,.field textarea{width:100%;padding:9px 12px;border:0.5px solid #ccc;border-radius:8px;font-family:'Sarabun',sans-serif;font-size:14px;outline:none;background:#fff;color:#1a1a1a;transition:border-color 0.15s}
-.field input:focus,.field select:focus,.field textarea:focus{border-color:#0F6E56;box-shadow:0 0 0 3px rgba(15,110,86,0.1)}
-.field textarea{height:76px;resize:vertical}
-.field-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.drive-wrap{display:flex;gap:8px;align-items:center}
-.drive-icon{font-size:22px;flex-shrink:0}
-.drive-preview{display:flex;align-items:center;gap:8px;background:#f5f5f5;border-radius:8px;padding:9px 12px;font-size:12px;color:#555;margin-top:6px}
-.color-swatches{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
-.cswatch{width:26px;height:26px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:transform 0.1s}
-.cswatch.selected{transform:scale(1.3);border-color:#1a1a1a}
-.modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:1.25rem}
-.btn-cancel{background:#f0f0f0;border:none;border-radius:8px;padding:9px 18px;font-size:14px;cursor:pointer;color:#333;font-family:'Sarabun',sans-serif;font-weight:500}
-.btn-cancel:hover{background:#e0e0e0}
-.btn-save{padding:9px 24px;background:#0F6E56;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:'Sarabun',sans-serif}
-.btn-save:hover{background:#085041}
+.topbar-sub {
+  font-size: 11px;
+  opacity: 0.8;
+  margin-top: 1px;
+  letter-spacing: 0.02em;
+}
 
-/* Confirmation & Toasts */
-.confirm-bg{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.4);display:flex;align-items:center;justify-content:center;z-index:200;padding:1rem}
-.confirm-box{background:#fff;border-radius:12px;padding:1.5rem;max-width:340px;width:100%;text-align:center;box-shadow:0 10px 40px rgba(0,0,0,0.2)}
-.confirm-box p{font-size:15px;margin-bottom:1.25rem;color:#333}
-.confirm-actions{display:flex;justify-content:center;gap:10px}
-.btn-del-confirm{padding:9px 22px;background:#c0392b;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:'Sarabun',sans-serif}
-.toast{position:fixed;bottom:24px;right:24px;background:#1a1a1a;color:#fff;padding:12px 20px;border-radius:10px;font-size:14px;z-index:999;opacity:0;transform:translateY(10px);transition:all 0.3s;pointer-events:none}
-.toast.show{opacity:1;transform:translateY(0)}
-.toast.success{background:#0F6E56}
-.toast.error{background:#c0392b}
+.topbar-actions { display: flex; gap: 8px; align-items: center; }
 
-.teacher-add-btn{display:flex;align-items:center;gap:6px;padding:8px 16px;background:#0F6E56;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Sarabun',sans-serif;transition:all 0.15s;white-space:nowrap}
-.teacher-add-btn:hover{background:#085041}
-.teacher-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-bottom:1.5rem}
+.btn-topbar {
+  display: flex; align-items: center; gap: 6px;
+  padding: 8px 16px;
+  border-radius: 10px;
+  font-size: 13px; font-weight: 600;
+  cursor: pointer;
+  font-family: 'Sarabun', sans-serif;
+  transition: all 0.2s;
+  border: none; white-space: nowrap;
+}
 
-/* Loading Overlay */
-#loading-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(255,255,255,0.8);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:600;color:#0F6E56}
-.spinner{border:4px solid #f3f3f3;border-top:4px solid #0F6E56;border-radius:50%;width:40px;height:40px;animation:spin 1s linear infinite;margin-bottom:10px}
-@keyframes spin{0%{transform:rotate(0deg)} 100%{transform:rotate(360deg)}}
+.btn-login {
+  background: rgba(255,255,255,0.15);
+  color: #fff;
+  backdrop-filter: blur(10px);
+  border: 1.5px solid rgba(255,255,255,0.3);
+}
+.btn-login:hover { background: rgba(255,255,255,0.25); transform: translateY(-1px); }
 
-@media(max-width:600px){
-  .topbar{padding:0 1rem}
-  .nav-tabs{padding:0 0.5rem;overflow-x:auto}
-  .nav-tab{padding:12px 12px;font-size:13px}
-  .page{padding:1rem}
-  .teacher-grid{grid-template-columns:1fr}
-  .field-row{grid-template-columns:1fr}
-  .tmodal-grid{grid-template-columns:1fr}
-  .teacher-toolbar{flex-direction:column;align-items:stretch}
-  .search-box{max-width:100%}
+.btn-add-ev {
+  background: var(--accent2);
+  color: #7A5500;
+  display: none;
+}
+.btn-add-ev:hover { background: #ffc429; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(255,209,102,0.5); }
+
+.btn-add-tc {
+  background: var(--accent3);
+  color: #065450;
+  display: none;
+}
+.btn-add-tc:hover { background: #3ab8af; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(78,205,196,0.5); }
+
+/* ===== NAV TABS ===== */
+.nav-tabs {
+  background: var(--surface);
+  border-bottom: 1.5px solid var(--border);
+  padding: 0 2rem;
+  display: flex;
+  gap: 0;
+  position: sticky; top: 68px; z-index: 40;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+}
+
+.nav-tab {
+  padding: 14px 22px;
+  font-size: 14px; font-weight: 600;
+  cursor: pointer;
+  color: var(--text-soft);
+  border-bottom: 3px solid transparent;
+  background: none;
+  border-top: none; border-left: none; border-right: none;
+  font-family: 'Sarabun', sans-serif;
+  display: flex; align-items: center; gap: 8px;
+  transition: all 0.2s;
+  white-space: nowrap;
+  position: relative;
+}
+.nav-tab.active { color: var(--primary); border-bottom-color: var(--primary); }
+.nav-tab:hover:not(.active) { color: var(--primary); background: var(--primary-light); }
+
+.nav-tab .tab-badge {
+  background: var(--primary);
+  color: #fff;
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: 99px;
+  font-weight: 700;
+}
+
+/* ===== PAGES ===== */
+.page { display: none; padding: 2rem; position: relative; z-index: 1; }
+.page.active { display: block; }
+.container { max-width: 1140px; margin: 0 auto; }
+
+/* ===== STATS ===== */
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+  margin-bottom: 1.75rem;
+}
+
+.stat-card {
+  background: var(--surface);
+  border-radius: var(--radius);
+  padding: 18px 20px;
+  text-align: center;
+  border: 1.5px solid var(--border);
+  transition: all 0.25s;
+  position: relative; overflow: hidden;
+}
+.stat-card::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: 4px;
+}
+.stat-card:nth-child(1)::before { background: linear-gradient(90deg, var(--primary), var(--accent3)); }
+.stat-card:nth-child(2)::before { background: linear-gradient(90deg, var(--blue), var(--purple)); }
+.stat-card:nth-child(3)::before { background: linear-gradient(90deg, var(--accent2), var(--accent)); }
+.stat-card:nth-child(4)::before { background: linear-gradient(90deg, var(--accent3), var(--primary)); }
+.stat-card:hover { transform: translateY(-3px); box-shadow: var(--shadow); }
+
+.stat-num {
+  font-family: 'Mitr', sans-serif;
+  font-size: 32px; font-weight: 700;
+  color: var(--primary);
+  line-height: 1;
+}
+.stat-label { font-size: 12px; color: var(--text-soft); margin-top: 5px; font-weight: 500; }
+
+/* ===== CALENDAR TOOLBAR ===== */
+.cal-toolbar {
+  display: flex; align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.25rem;
+  flex-wrap: wrap; gap: 10px;
+}
+
+.month-nav { display: flex; align-items: center; gap: 12px; }
+
+.month-nav button {
+  width: 38px; height: 38px;
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: 16px; color: var(--primary);
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.2s;
+}
+.month-nav button:hover {
+  background: var(--primary);
+  color: #fff;
+  border-color: var(--primary);
+  transform: scale(1.05);
+}
+
+.month-label {
+  font-family: 'Mitr', sans-serif;
+  font-size: 20px; font-weight: 600;
+  color: var(--text);
+  min-width: 200px; text-align: center;
+}
+
+.btn-toggle-view {
+  display: flex; align-items: center; gap: 7px;
+  padding: 9px 18px;
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 13px; font-weight: 600;
+  color: var(--primary);
+  cursor: pointer;
+  font-family: 'Sarabun', sans-serif;
+  transition: all 0.2s;
+}
+.btn-toggle-view:hover {
+  background: var(--primary);
+  color: #fff;
+  border-color: var(--primary);
+}
+
+/* ===== CALENDAR GRID ===== */
+.cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 6px;
+}
+
+.cal-hcell {
+  text-align: center;
+  font-size: 12px; font-weight: 700;
+  color: var(--text-soft);
+  padding: 8px 0;
+  font-family: 'Mitr', sans-serif;
+  letter-spacing: 0.04em;
+}
+.cal-hcell.sat { color: var(--blue); }
+.cal-hcell.sun { color: var(--accent); }
+
+.cal-day {
+  min-height: 88px;
+  border-radius: var(--radius-sm);
+  border: 1.5px solid var(--border);
+  padding: 8px;
+  background: var(--surface);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.cal-day:hover { border-color: var(--primary); box-shadow: var(--shadow); transform: translateY(-2px); }
+.cal-day.other-month { background: rgba(240,249,246,0.5); opacity: 0.5; }
+.cal-day.today {
+  border-color: var(--primary);
+  border-width: 2px;
+  background: linear-gradient(135deg, var(--primary-light) 0%, #fff 100%);
+  box-shadow: 0 0 0 3px rgba(0,168,120,0.1);
+}
+.cal-day.saturday { background: #F0F5FF; border-color: #D0E2FF; }
+.cal-day.saturday .day-num { color: var(--blue); }
+.cal-day.sunday, .cal-day.holiday { background: #FFF3F3; border-color: #FFD0D0; }
+.cal-day.sunday .day-num, .cal-day.holiday .day-num { color: var(--accent); }
+
+.day-num {
+  font-family: 'Mitr', sans-serif;
+  font-size: 13px; font-weight: 600;
+  color: var(--text);
+  margin-bottom: 5px;
+}
+.cal-day.today .day-num {
+  background: var(--primary);
+  color: #fff;
+  width: 24px; height: 24px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px;
+}
+
+.holiday-lbl {
+  font-size: 9px;
+  color: var(--accent);
+  background: rgba(255,107,107,0.1);
+  padding: 2px 5px;
+  border-radius: 4px;
+  margin-bottom: 4px;
+  font-weight: 600;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  border: 1px solid rgba(255,107,107,0.2);
+}
+
+.ev-dot {
+  display: flex; align-items: center; gap: 4px;
+  margin-bottom: 3px;
+}
+.dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.ev-dot span { font-size: 10px; color: var(--text-soft); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 90px; }
+
+/* ===== FILTER BAR ===== */
+.filter-bar {
+  display: flex; gap: 8px;
+  flex-wrap: wrap; align-items: center;
+  margin-bottom: 1.25rem;
+}
+
+.fchip {
+  font-size: 12px;
+  padding: 6px 16px;
+  border-radius: 99px;
+  border: 1.5px solid var(--border);
+  background: var(--surface);
+  cursor: pointer; color: var(--text-soft);
+  font-family: 'Sarabun', sans-serif; font-weight: 600;
+  transition: all 0.2s;
+}
+.fchip.active { background: var(--primary); color: #fff; border-color: var(--primary); box-shadow: 0 3px 10px rgba(0,168,120,0.3); }
+.fchip:hover:not(.active) { background: var(--primary-light); border-color: var(--primary); color: var(--primary); }
+
+/* ===== EVENT CARDS ===== */
+.ev-list { display: flex; flex-direction: column; gap: 12px; }
+
+.ev-card {
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px 18px;
+  display: flex; align-items: flex-start; gap: 16px;
+  transition: all 0.25s;
+  position: relative; overflow: hidden;
+}
+.ev-card::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 4px;
+  border-radius: 4px 0 0 4px;
+}
+.ev-card:hover { box-shadow: var(--shadow); transform: translateY(-2px); border-color: rgba(0,168,120,0.3); }
+
+.ev-left {
+  display: flex; flex-direction: column;
+  align-items: center;
+  min-width: 56px;
+  background: linear-gradient(135deg, var(--primary-light), #fff);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 12px 8px;
+  text-align: center; flex-shrink: 0;
+}
+
+.ev-day {
+  font-family: 'Mitr', sans-serif;
+  font-size: 26px; font-weight: 700;
+  color: var(--primary); line-height: 1;
+}
+.ev-month-lbl { font-size: 10px; color: var(--text-soft); margin-top: 4px; font-weight: 600; }
+
+.ev-body { flex: 1; min-width: 0; }
+.ev-title { font-size: 15px; font-weight: 600; color: var(--text); margin-bottom: 6px; line-height: 1.4; }
+
+.dept-badge {
+  font-size: 11px;
+  padding: 3px 12px;
+  border-radius: 99px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.ev-desc { font-size: 13px; color: var(--text-soft); margin-top: 6px; line-height: 1.6; }
+
+.file-chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 12px; color: var(--blue);
+  background: rgba(17,138,178,0.08);
+  padding: 5px 12px;
+  border-radius: 8px;
+  text-decoration: none; margin-top: 8px;
+  font-weight: 600;
+  border: 1px solid rgba(17,138,178,0.2);
+  transition: all 0.2s;
+}
+.file-chip:hover { background: rgba(17,138,178,0.15); }
+
+.btn-actions { display: flex; gap: 4px; flex-shrink: 0; }
+.btn-ic {
+  background: none; border: none; cursor: pointer;
+  padding: 8px; border-radius: var(--radius-sm);
+  font-size: 16px; display: flex; align-items: center; justify-content: center;
+  transition: all 0.2s; color: #bbb;
+}
+.btn-ic.edit:hover { color: var(--blue); background: rgba(17,138,178,0.1); }
+.btn-ic.del:hover { color: var(--accent); background: rgba(255,107,107,0.1); }
+
+.empty-state {
+  text-align: center; padding: 5rem 1rem;
+  color: #bbb; font-size: 14px;
+}
+.empty-state i { color: #ddd; }
+
+/* ===== TEACHER SECTION ===== */
+.teacher-toolbar {
+  display: flex; gap: 10px;
+  flex-wrap: wrap; align-items: center;
+  margin-bottom: 1.75rem;
+}
+
+.search-box {
+  display: flex; align-items: center; gap: 10px;
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 10px 16px;
+  flex: 1; min-width: 220px; max-width: 440px;
+  transition: all 0.2s;
+}
+.search-box:focus-within {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 4px rgba(0,168,120,0.1);
+}
+.search-box i { color: var(--primary); font-size: 18px; flex-shrink: 0; }
+.search-box input {
+  border: none; outline: none;
+  font-family: 'Sarabun', sans-serif; font-size: 14px;
+  background: none; width: 100%; color: var(--text);
+}
+
+.teacher-type-tabs { display: flex; gap: 6px; flex-wrap: wrap; }
+
+.tt-tab {
+  padding: 8px 16px; font-size: 13px; font-weight: 600;
+  border-radius: 99px;
+  border: 1.5px solid var(--border);
+  background: var(--surface); cursor: pointer;
+  color: var(--text-soft);
+  font-family: 'Sarabun', sans-serif;
+  transition: all 0.2s;
+}
+.tt-tab.active { background: var(--primary); color: #fff; border-color: var(--primary); box-shadow: 0 3px 10px rgba(0,168,120,0.3); }
+.tt-tab:hover:not(.active) { background: var(--primary-light); border-color: var(--primary); color: var(--primary); }
+
+.teacher-count { font-size: 13px; color: var(--text-soft); white-space: nowrap; padding-top: 4px; font-weight: 500; }
+
+.teacher-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 12px; margin-bottom: 1.75rem;
+}
+
+.teacher-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+  gap: 14px;
+}
+
+.t-card {
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px;
+  transition: all 0.25s;
+  cursor: pointer;
+  position: relative; overflow: hidden;
+}
+.t-card::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; height: 3px;
+  background: linear-gradient(90deg, var(--primary), var(--accent3));
+  opacity: 0; transition: opacity 0.2s;
+}
+.t-card:hover {
+  box-shadow: var(--shadow-lg);
+  border-color: rgba(0,168,120,0.3);
+  transform: translateY(-3px);
+}
+.t-card:hover::after { opacity: 1; }
+
+.t-card-header { display: flex; align-items: center; gap: 14px; margin-bottom: 12px; }
+
+.t-avatar {
+  width: 54px; height: 54px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Mitr', sans-serif;
+  font-size: 17px; font-weight: 700; color: #fff;
+  flex-shrink: 0; overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0,168,120,0.3);
+}
+.t-avatar.retired { background: linear-gradient(135deg, #EF9F27, #C47A12); box-shadow: 0 4px 12px rgba(239,159,39,0.35); }
+.t-avatar.foreign { background: linear-gradient(135deg, #118AB2, #0A5C7A); box-shadow: 0 4px 12px rgba(17,138,178,0.35); }
+
+.t-name { font-size: 14px; font-weight: 600; color: var(--text); line-height: 1.35; }
+.t-code { font-size: 11px; color: var(--text-soft); margin-top: 3px; font-weight: 500; }
+
+.t-badge {
+  display: inline-block; font-size: 10px;
+  padding: 2px 10px;
+  border-radius: 99px; margin-top: 4px; font-weight: 700;
+  letter-spacing: 0.02em;
+}
+.t-badge.retired { background: #FEF3C7; color: #92400E; border: 1px solid #F6D860; }
+.t-badge.foreign { background: #DBEAFE; color: #1E40AF; border: 1px solid #BFDBFE; }
+
+.t-info { font-size: 12px; color: var(--text-soft); display: flex; flex-direction: column; gap: 5px; }
+.t-info-row { display: flex; align-items: flex-start; gap: 7px; }
+.t-info-row i { font-size: 14px; color: var(--primary); flex-shrink: 0; margin-top: 1px; }
+
+/* ===== MODALS ===== */
+.tmodal-bg {
+  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(0,0,0,0.45);
+  display: flex; align-items: flex-start; justify-content: center;
+  z-index: 200; padding: 1.5rem; overflow-y: auto;
+  backdrop-filter: blur(4px);
+}
+.tmodal {
+  background: var(--surface);
+  border-radius: 20px;
+  width: 100%; max-width: 540px;
+  padding: 2.25rem;
+  box-shadow: 0 24px 80px rgba(0,0,0,0.25);
+  position: relative; margin: auto;
+  border: 1.5px solid var(--border);
+}
+
+.tmodal-close {
+  position: absolute; top: 16px; right: 16px;
+  background: #f5f5f5; border: none; cursor: pointer;
+  font-size: 18px; color: #888;
+  width: 34px; height: 34px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 10px; transition: all 0.2s;
+}
+.tmodal-close:hover { background: #ffe0e0; color: var(--accent); }
+
+.tmodal-avatar {
+  width: 86px; height: 86px;
+  border-radius: 20px;
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Mitr', sans-serif;
+  font-size: 28px; font-weight: 700; color: #fff;
+  margin: 0 auto 1rem; overflow: hidden;
+  box-shadow: 0 8px 24px rgba(0,168,120,0.35);
+}
+.tmodal-avatar.retired {
+  background: linear-gradient(135deg, #EF9F27, #C47A12);
+  box-shadow: 0 8px 24px rgba(239,159,39,0.35);
+}
+.tmodal-avatar.foreign {
+  background: linear-gradient(135deg, #118AB2, #0A5C7A);
+  box-shadow: 0 8px 24px rgba(17,138,178,0.35);
+}
+
+.tmodal-name { text-align: center; font-family: 'Mitr', sans-serif; font-size: 20px; font-weight: 600; margin-bottom: 4px; }
+.tmodal-code { text-align: center; font-size: 13px; color: var(--text-soft); margin-bottom: 1.25rem; }
+
+.tmodal-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+.tmodal-field {
+  background: var(--bg);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+}
+.tmodal-field label {
+  display: block; font-size: 10px; color: var(--text-soft);
+  margin-bottom: 4px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em;
+}
+.tmodal-field p { font-size: 13px; color: var(--text); font-weight: 500; }
+.tmodal-field.full { grid-column: 1/-1; }
+
+/* Form Modal */
+.modal-wrap {
+  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(0,0,0,0.45);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 100; padding: 1rem;
+  backdrop-filter: blur(4px);
+}
+.modal {
+  background: var(--surface);
+  border-radius: 20px;
+  width: 100%; max-width: 520px;
+  padding: 2rem; max-height: 90vh; overflow-y: auto;
+  box-shadow: 0 24px 80px rgba(0,0,0,0.2);
+  border: 1.5px solid var(--border);
+}
+.modal h3 {
+  font-family: 'Mitr', sans-serif;
+  font-size: 18px; font-weight: 600;
+  margin-bottom: 1.5rem; color: var(--text);
+  display: flex; align-items: center; gap: 8px;
+}
+.modal h3::before {
+  content: '';
+  display: block; width: 4px; height: 20px;
+  background: linear-gradient(180deg, var(--primary), var(--accent3));
+  border-radius: 2px;
+}
+
+.field { margin-bottom: 1rem; }
+.field label { display: block; font-size: 12px; color: var(--text-soft); margin-bottom: 5px; font-weight: 700; letter-spacing: 0.03em; text-transform: uppercase; }
+.field input, .field select, .field textarea {
+  width: 100%; padding: 10px 14px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-family: 'Sarabun', sans-serif; font-size: 14px;
+  outline: none; background: var(--surface); color: var(--text);
+  transition: all 0.2s;
+}
+.field input:focus, .field select:focus, .field textarea:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 4px rgba(0,168,120,0.1);
+}
+.field textarea { height: 78px; resize: vertical; }
+.field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+.drive-wrap { display: flex; gap: 8px; align-items: center; }
+.drive-icon { font-size: 22px; flex-shrink: 0; }
+.drive-preview {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--bg); border-radius: var(--radius-sm);
+  padding: 9px 12px; font-size: 12px; color: var(--text-soft);
+  margin-top: 6px;
+  border: 1px solid var(--border);
+}
+
+.color-swatches { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 8px; }
+.cswatch {
+  width: 28px; height: 28px; border-radius: 50%;
+  cursor: pointer; border: 2px solid transparent;
+  transition: transform 0.15s;
+}
+.cswatch.selected { transform: scale(1.3); border-color: var(--text); box-shadow: 0 2px 8px rgba(0,0,0,0.3); }
+
+.modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 1.5rem; }
+
+.btn-cancel {
+  background: #f5f5f5; border: none; border-radius: var(--radius-sm);
+  padding: 10px 20px; font-size: 14px; cursor: pointer;
+  color: var(--text-soft); font-family: 'Sarabun', sans-serif; font-weight: 600;
+  transition: all 0.2s;
+}
+.btn-cancel:hover { background: #eee; }
+
+.btn-save {
+  padding: 10px 28px; background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  color: #fff; border: none; border-radius: var(--radius-sm);
+  font-size: 14px; font-weight: 700; cursor: pointer;
+  font-family: 'Sarabun', sans-serif;
+  box-shadow: 0 4px 12px rgba(0,168,120,0.35);
+  transition: all 0.2s;
+}
+.btn-save:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(0,168,120,0.45); }
+
+/* ===== CONFIRM ===== */
+.confirm-bg {
+  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(0,0,0,0.45);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 200; padding: 1rem;
+  backdrop-filter: blur(4px);
+}
+.confirm-box {
+  background: var(--surface); border-radius: 20px;
+  padding: 2rem; max-width: 340px; width: 100%;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+  border: 1.5px solid var(--border);
+}
+.confirm-icon { font-size: 48px; margin-bottom: 12px; }
+.confirm-box p { font-size: 15px; margin-bottom: 1.5rem; color: var(--text); font-weight: 500; }
+.confirm-actions { display: flex; justify-content: center; gap: 10px; }
+.btn-del-confirm {
+  padding: 10px 24px; background: linear-gradient(135deg, #e74c3c, #c0392b);
+  color: #fff; border: none; border-radius: var(--radius-sm);
+  font-size: 14px; font-weight: 700; cursor: pointer;
+  font-family: 'Sarabun', sans-serif;
+  box-shadow: 0 4px 12px rgba(192,57,43,0.35);
+  transition: all 0.2s;
+}
+.btn-del-confirm:hover { transform: translateY(-1px); }
+
+/* ===== TOAST ===== */
+.toast {
+  position: fixed; bottom: 28px; right: 28px;
+  padding: 14px 22px; border-radius: 14px;
+  font-size: 14px; font-weight: 600;
+  z-index: 999; opacity: 0;
+  transform: translateY(12px) scale(0.95);
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  pointer-events: none;
+  display: flex; align-items: center; gap: 8px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+}
+.toast.show { opacity: 1; transform: translateY(0) scale(1); }
+.toast.success { background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: #fff; }
+.toast.error { background: linear-gradient(135deg, #e74c3c, #c0392b); color: #fff; }
+
+/* ===== LOCK STATE ===== */
+.lock-screen {
+  grid-column: 1/-1;
+  padding: 5rem 2rem;
+  text-align: center;
+}
+.lock-icon-wrap {
+  width: 90px; height: 90px;
+  background: linear-gradient(135deg, var(--primary-light), #fff);
+  border-radius: 24px;
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 1.25rem;
+  border: 2px solid var(--border);
+  font-size: 38px;
+}
+.lock-title { font-family: 'Mitr', sans-serif; font-size: 20px; font-weight: 600; color: var(--text); margin-bottom: 8px; }
+.lock-desc { font-size: 14px; color: var(--text-soft); }
+
+/* ===== LOADING ===== */
+#loading-overlay {
+  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  background: linear-gradient(135deg, var(--bg) 0%, #E0F7F1 100%);
+  z-index: 9999;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 16px;
+}
+.loading-logo {
+  width: 72px; height: 72px;
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  border-radius: 20px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 32px;
+  box-shadow: 0 8px 32px rgba(0,168,120,0.3);
+  animation: loadPulse 1.5s ease-in-out infinite;
+}
+@keyframes loadPulse {
+  0%, 100% { transform: scale(1); box-shadow: 0 8px 32px rgba(0,168,120,0.3); }
+  50% { transform: scale(1.05); box-shadow: 0 12px 40px rgba(0,168,120,0.5); }
+}
+.loading-text {
+  font-family: 'Mitr', sans-serif;
+  font-size: 16px; font-weight: 500; color: var(--primary);
+  letter-spacing: 0.04em;
+}
+.loading-dots { display: flex; gap: 6px; }
+.loading-dots span {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--primary);
+  animation: dotBounce 1.2s ease-in-out infinite;
+}
+.loading-dots span:nth-child(2) { animation-delay: 0.2s; }
+.loading-dots span:nth-child(3) { animation-delay: 0.4s; }
+@keyframes dotBounce {
+  0%, 100% { transform: translateY(0); opacity: 0.4; }
+  50% { transform: translateY(-8px); opacity: 1; }
+}
+
+/* ===== SECTION HEADER ===== */
+.section-header {
+  display: flex; align-items: center; gap: 10px;
+  margin-bottom: 1rem;
+}
+.section-pill {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: var(--primary-light);
+  color: var(--primary);
+  font-family: 'Mitr', sans-serif;
+  font-size: 12px; font-weight: 600;
+  padding: 4px 12px; border-radius: 99px;
+  letter-spacing: 0.03em;
+  border: 1px solid rgba(0,168,120,0.2);
+}
+
+@media(max-width: 640px) {
+  .topbar { padding: 0 1rem; height: 60px; }
+  .nav-tabs { padding: 0 0.5rem; overflow-x: auto; }
+  .nav-tab { padding: 12px 14px; font-size: 13px; }
+  .page { padding: 1rem; }
+  .teacher-grid { grid-template-columns: 1fr; }
+  .field-row { grid-template-columns: 1fr; }
+  .tmodal-grid { grid-template-columns: 1fr; }
+  .teacher-toolbar { flex-direction: column; align-items: stretch; }
+  .search-box { max-width: 100%; }
+  .month-label { font-size: 16px; min-width: 160px; }
+  .stats { grid-template-columns: repeat(2, 1fr); }
 }
 </style>
 </head>
 <body>
 
 <div id="loading-overlay">
-  <div class="spinner"></div>
-  กำลังโหลดข้อมูลจากระบบคลาวด์...
+  <div class="loading-logo">🏫</div>
+  <div class="loading-text">กำลังโหลดข้อมูล</div>
+  <div class="loading-dots">
+    <span></span><span></span><span></span>
+  </div>
 </div>
 
+<!-- TOPBAR -->
 <div class="topbar">
   <div class="topbar-brand">
+    <div class="school-logo">🏫</div>
     <div>
-      <div class="topbar-title">📢 โรงเรียนพระมารดานิจจานุเคราะห์</div>
+      <div class="topbar-title">โรงเรียนพระมารดานิจจานุเคราะห์</div>
       <div class="topbar-sub">ระบบประชาสัมพันธ์และทะเบียนบุคลากร</div>
     </div>
   </div>
-  <div style="display:flex;gap:8px;align-items:center">
-    <!-- Auth Button -->
-    <button class="btn-add" id="btn-login" onclick="toggleAuth()">
+  <div class="topbar-actions">
+    <button class="btn-topbar btn-login" id="btn-login" onclick="toggleAuth()">
       <i class="ti ti-login"></i> <span id="login-text">เข้าสู่ระบบ</span>
     </button>
-    <button class="btn-add" onclick="openEventModal()" id="btn-add-event" style="display:none">
+    <button class="btn-topbar btn-add-ev" onclick="openEventModal()" id="btn-add-event">
       <i class="ti ti-plus"></i> เพิ่มกิจกรรม
     </button>
-    <button class="teacher-add-btn" onclick="openTeacherAddModal()" id="btn-add-teacher" style="display:none">
+    <button class="btn-topbar btn-add-tc" onclick="openTeacherAddModal()" id="btn-add-teacher">
       <i class="ti ti-user-plus"></i> เพิ่มครู
     </button>
   </div>
 </div>
 
+<!-- NAV TABS -->
 <div class="nav-tabs">
-  <button class="nav-tab active" onclick="switchPage('events',this)"><i class="ti ti-calendar-event"></i> กิจกรรม</button>
-  <button class="nav-tab" onclick="switchPage('teachers',this)"><i class="ti ti-users"></i> ทะเบียนครู</button>
+  <button class="nav-tab active" onclick="switchPage('events',this)">
+    <i class="ti ti-calendar-event"></i> กิจกรรม
+  </button>
+  <button class="nav-tab" onclick="switchPage('teachers',this)">
+    <i class="ti ti-users"></i> ทะเบียนครู
+  </button>
 </div>
 
-<!-- ========== EVENTS PAGE ========== -->
+<!-- EVENTS PAGE -->
 <div class="page active" id="page-events">
 <div class="container">
-  <div style="margin-bottom:1.5rem"></div>
+  <div style="margin-bottom:1.75rem"></div>
   <div class="stats" id="stats-bar"></div>
-  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:1rem;align-items:center;justify-content:space-between">
-    <div class="month-nav" style="display:flex;align-items:center;gap:10px" id="month-nav-wrap">
+
+  <div class="cal-toolbar">
+    <div class="month-nav" id="month-nav-wrap">
       <button onclick="changeMonth(-1)"><i class="ti ti-chevron-left"></i></button>
       <span class="month-label" id="month-label"></span>
       <button onclick="changeMonth(1)"><i class="ti ti-chevron-right"></i></button>
     </div>
-    <button class="fchip" onclick="toggleCalView()" id="cal-toggle" style="display:flex;align-items:center;gap:6px"><i class="ti ti-list"></i> ดูรายการ</button>
+    <button class="btn-toggle-view" onclick="toggleCalView()" id="cal-toggle">
+      <i class="ti ti-list"></i> ดูรายการ
+    </button>
   </div>
+
   <div id="cal-view">
     <div class="cal-grid" id="cal-header"></div>
-    <div class="cal-grid" id="cal-grid" style="margin-top:5px"></div>
+    <div class="cal-grid" id="cal-grid" style="margin-top:6px"></div>
   </div>
+
   <div id="list-section" style="display:none">
     <div class="filter-bar" id="filter-bar"></div>
     <div class="ev-list" id="ev-list"></div>
@@ -245,10 +907,10 @@ body{font-family:'Sarabun',sans-serif;background:#F2F4F3;color:#1a1a1a;min-heigh
 </div>
 </div>
 
-<!-- ========== TEACHERS PAGE ========== -->
+<!-- TEACHERS PAGE -->
 <div class="page" id="page-teachers">
 <div class="container">
-  <div style="margin-bottom:1.5rem"></div>
+  <div style="margin-bottom:1.75rem"></div>
   <div class="teacher-stats" id="teacher-stats-bar"></div>
   <div class="teacher-toolbar">
     <div class="search-box">
@@ -303,6 +965,7 @@ body{font-family:'Sarabun',sans-serif;background:#F2F4F3;color:#1a1a1a;min-heigh
 <div id="confirm-wrap" style="display:none">
   <div class="confirm-bg">
     <div class="confirm-box">
+      <div class="confirm-icon">🗑️</div>
       <p id="confirm-msg">ยืนยันการลบกิจกรรมนี้?</p>
       <div class="confirm-actions">
         <button class="btn-cancel" onclick="closeConfirm()">ยกเลิก</button>
@@ -318,7 +981,7 @@ body{font-family:'Sarabun',sans-serif;background:#F2F4F3;color:#1a1a1a;min-heigh
     <div class="tmodal" onclick="event.stopPropagation()">
       <button class="tmodal-close" onclick="closeTeacherModal()"><i class="ti ti-x"></i></button>
       <div id="tmodal-body"></div>
-      <div style="display:flex;gap:8px;justify-content:center;margin-top:1.25rem" id="tmodal-actions"></div>
+      <div style="display:flex;gap:8px;justify-content:center;margin-top:1.5rem" id="tmodal-actions"></div>
     </div>
   </div>
 </div>
@@ -326,7 +989,7 @@ body{font-family:'Sarabun',sans-serif;background:#F2F4F3;color:#1a1a1a;min-heigh
 <!-- Add/Edit Teacher Modal -->
 <div id="teacher-edit-modal-wrap" style="display:none">
   <div class="modal-wrap" onclick="closeTeacherEditModal()">
-    <div class="modal" onclick="event.stopPropagation()" style="max-width:560px">
+    <div class="modal" onclick="event.stopPropagation()" style="max-width:580px">
       <h3 id="teacher-modal-title">เพิ่มข้อมูลครู</h3>
       <div class="field-row">
         <div class="field"><label>ชื่อ-นำหน้า *</label><input type="text" id="tf-name" placeholder="เช่น นางสาวสมใจ"></div>
@@ -368,11 +1031,9 @@ body{font-family:'Sarabun',sans-serif;background:#F2F4F3;color:#1a1a1a;min-heigh
   </div>
 </div>
 
-<!-- Toast -->
 <div class="toast" id="toast"></div>
 
 <script>
-// ==================== STATE MANAGEMENT ====================
 const AppState = {
   user: null,
   events: [],
@@ -381,7 +1042,7 @@ const AppState = {
   ui: {
     curYear: new Date().getFullYear(),
     curMonth: new Date().getMonth(),
-    selColor: '#0F6E56',
+    selColor: '#00A878',
     editId: null,
     pendingDelId: null,
     calMode: true,
@@ -391,46 +1052,22 @@ const AppState = {
   }
 };
 
-// 1. เพิ่มกล่องเก็บอีเมลที่มีสิทธิ์ใน CONSTANTS
 const CONSTANTS = {
-  COLORS: ['#0F6E56','#185FA5','#BA7517','#A32D2D','#993556','#533AB7','#3B6D11','#0E7490'],
+  COLORS: ['#00A878','#118AB2','#EF9F27','#FF6B6B','#845EC2','#4ECDC4','#F77F00','#06D6A0'],
   DAYS_TH: ['อา','จ','อ','พ','พฤ','ศ','ส'],
   MONTHS_TH: ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'],
-  
-  // รายชื่ออีเมลที่อนุญาตให้เข้าใช้งาน
-  ALLOWED_USERS: [
-    'kaeacer@gmail.com',
-    'saipin@pramanda.ac.th'
-  ],
-
-  // ข้อมูลวันหยุดราชการ
+  ALLOWED_USERS: ['kaeacer@gmail.com','saipin@pramanda.ac.th'],
   HOLIDAYS_TH: {
-    '01-01': 'วันขึ้นปีใหม่',
-    '04-06': 'วันจักรี',
-    '04-13': 'วันสงกรานต์',
-    '04-14': 'วันสงกรานต์',
-    '04-15': 'วันสงกรานต์',
-    '05-01': 'วันแรงงาน',
-    '05-04': 'วันฉัตรมงคล',
-    '06-03': 'วันเฉลิมฯ พระราชินี',
-    '07-28': 'วันเฉลิมฯ ร.10',
-    '08-12': 'วันแม่แห่งชาติ',
-    '10-13': 'วันนวมินทรมหาราช',
-    '10-23': 'วันปิยมหาราช',
-    '12-05': 'วันพ่อแห่งชาติ',
-    '12-10': 'วันรัฐธรรมนูญ',
-    '12-31': 'วันสิ้นปี',
-    '2026-03-03': 'วันมาฆบูชา',
-    '2026-05-31': 'วันวิสาขบูชา',
-    '2026-06-01': 'ชดเชยวันวิสาขบูชา',
-    '2026-07-29': 'วันอาสาฬหบูชา',
-    '2026-07-30': 'วันเข้าพรรษา'
+    '01-01':'วันขึ้นปีใหม่','04-06':'วันจักรี','04-13':'วันสงกรานต์','04-14':'วันสงกรานต์',
+    '04-15':'วันสงกรานต์','05-01':'วันแรงงาน','05-04':'วันฉัตรมงคล','06-03':'วันเฉลิมฯ พระราชินี',
+    '07-28':'วันเฉลิมฯ ร.10','08-12':'วันแม่แห่งชาติ','10-13':'วันนวมินทรมหาราช',
+    '10-23':'วันปิยมหาราช','12-05':'วันพ่อแห่งชาติ','12-10':'วันรัฐธรรมนูญ','12-31':'วันสิ้นปี',
+    '2026-03-03':'วันมาฆบูชา','2026-05-31':'วันวิสาขบูชา','2026-06-01':'ชดเชยวันวิสาขบูชา',
+    '2026-07-29':'วันอาสาฬหบูชา','2026-07-30':'วันเข้าพรรษา'
   }
 };
-// ==================== FIREBASE INIT ====================
-// ⚠️ เปลี่ยนค่าเหล่านี้เป็น Project Firebase ของคุณ ⚠️
+
 const firebaseConfig = {
-  
   apiKey: "AIzaSyDVNTbYqG8hGjyIH3gC59u6BTZseq64I_E",
   authDomain: "prpmd-eed5f.firebaseapp.com",
   databaseURL: "https://prpmd-eed5f-default-rtdb.asia-southeast1.firebasedatabase.app",
@@ -446,7 +1083,6 @@ const auth = firebase.auth();
 const db = firebase.firestore();
 const provider = new firebase.auth.GoogleAuthProvider();
 
-// ==================== UTILS ====================
 function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2); }
 function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
@@ -454,58 +1090,46 @@ function showToast(msg, type='success') {
   const t = document.getElementById('toast');
   t.textContent = msg;
   t.className = `toast ${type} show`;
-  setTimeout(() => t.className = 'toast', 2500);
+  setTimeout(() => t.className = 'toast', 2800);
 }
 
-// ==================== AUTH ====================
 function toggleAuth() {
   if (AppState.user) {
-    auth.signOut().then(() => showToast('ออกจากระบบเรียบร้อยแล้ว', 'success'));
+    auth.signOut().then(() => showToast('ออกจากระบบเรียบร้อยแล้ว ✓'));
   } else {
     auth.signInWithPopup(provider).catch(err => showToast(err.message, 'error'));
   }
 }
 
-// ==================== AUTH & DATA FETCHING ====================
 auth.onAuthStateChanged(user => {
   AppState.user = user;
   const loginBtn = document.getElementById('btn-login');
-  const btnAddEvent = document.getElementById('btn-add-event');
-  const btnAddTeacher = document.getElementById('btn-add-teacher');
   const isEventPage = document.getElementById('page-events').classList.contains('active');
 
   if (user) {
     loginBtn.innerHTML = `<i class="ti ti-logout"></i> <span id="login-text">ออกจากระบบ</span>`;
-    loginBtn.style.color = '#c0392b';
-    loginBtn.style.background = '#fdecea';
-    
-    if (isEventPage) btnAddEvent.style.display = 'flex';
-    else btnAddTeacher.style.display = 'flex';
-    
-    showToast(`ยินดีต้อนรับ ${user.displayName}`);
-    loadTeachersData(); // โหลดข้อมูลครูเมื่อล็อกอินสำเร็จ
+    loginBtn.style.background = 'rgba(255,107,107,0.2)';
+    loginBtn.style.borderColor = 'rgba(255,107,107,0.5)';
+    if (isEventPage) document.getElementById('btn-add-event').style.display = 'flex';
+    else document.getElementById('btn-add-teacher').style.display = 'flex';
+    showToast(`🎉 ยินดีต้อนรับ ${user.displayName}`);
+    loadTeachersData();
   } else {
     loginBtn.innerHTML = `<i class="ti ti-login"></i> <span id="login-text">เข้าสู่ระบบ</span>`;
-    loginBtn.style.color = '#0F6E56';
-    loginBtn.style.background = '#fff';
-    
-    btnAddEvent.style.display = 'none';
-    btnAddTeacher.style.display = 'none';
-    
-    // ล้างข้อมูลครูออกจากหน่วยความจำเมื่อล็อกเอาท์
-    AppState.teachers = []; 
+    loginBtn.style.background = 'rgba(255,255,255,0.15)';
+    loginBtn.style.borderColor = 'rgba(255,255,255,0.3)';
+    document.getElementById('btn-add-event').style.display = 'none';
+    document.getElementById('btn-add-teacher').style.display = 'none';
+    AppState.teachers = [];
     if (!isEventPage) renderTeachers();
   }
-  
   if (isEventPage) renderAllEvents();
 });
 
-// ฟังก์ชันดึงข้อมูลตอนเปิดเว็บครั้งแรก (ดึงแค่กิจกรรม)
 async function initData() {
   try {
     const eventsSnapshot = await db.collection('events').get();
     AppState.events = eventsSnapshot.docs.map(doc => doc.data());
-
     document.getElementById('loading-overlay').style.display = 'none';
     renderAllEvents();
   } catch (error) {
@@ -514,123 +1138,18 @@ async function initData() {
   }
 }
 
-// ฟังก์ชันดึงข้อมูลครู (จะทำงานก็ต่อเมื่อล็อกอินแล้วเท่านั้น)
 async function loadTeachersData() {
   if (!AppState.user) return;
   try {
     const snap = await db.collection('teachers').get();
     AppState.teachers = snap.docs.map(doc => doc.data());
-    
     if (document.getElementById('page-teachers').classList.contains('active')) {
       renderTeacherStats();
       renderTeachers();
     }
-  } catch (error) {
-    console.error("Error loading teachers:", error);
-  }
+  } catch (error) { console.error("Error loading teachers:", error); }
 }
 
-// ==================== TEACHERS RENDERING (แบบมีระบบล็อค) ====================
-function renderTeachers() {
-  const grid = document.getElementById('teacher-grid');
-  const toolbar = document.querySelector('.teacher-toolbar');
-  const statsBar = document.getElementById('teacher-stats-bar');
-
-  // ถ้ายังไม่ได้ล็อกอิน ให้ซ่อนเครื่องมือและโชว์หน้ากุญแจล็อค
-  if (!AppState.user) {
-    if(toolbar) toolbar.style.display = 'none';
-    if(statsBar) statsBar.style.display = 'none';
-    
-    grid.innerHTML = `
-      <div class="empty-state" style="grid-column:1/-1; padding: 6rem 1rem;">
-        <i class="ti ti-lock-square" style="font-size:56px; display:block; margin-bottom:15px; color:#ccc;"></i>
-        <h3 style="color:#333; margin-bottom:8px; font-size: 18px;">ข้อมูลสงวนสิทธิ์เฉพาะบุคลากร</h3>
-        <p style="color:#777;">กรุณาเข้าสู่ระบบด้วยบัญชี Google เพื่อดูทะเบียนข้อมูลครู</p>
-      </div>`;
-    return;
-  }
-
-  // ถ้าล็อกอินแล้ว ให้แสดงแถบเครื่องมือตามปกติ
-  if(toolbar) toolbar.style.display = 'flex';
-  if(statsBar) statsBar.style.display = 'grid';
-
-  const q = document.getElementById('teacher-search').value.trim().toLowerCase();
-  
-  AppState.pool = AppState.teachers.filter(t => {
-    if (AppState.ui.teacherType !== 'all' && t.type !== AppState.ui.teacherType) return false;
-    if (q) {
-      const fullName = `${t.name} ${t.surname} ${t.code} ${t.subject} ${t.major} ${t.role} ${t.nationality || ''}`.toLowerCase();
-      return fullName.includes(q);
-    }
-    return true;
-  });
-
-  document.getElementById('teacher-count').textContent = `พบ ${AppState.pool.length} คน`;
-  grid.innerHTML = '';
-
-  if (!AppState.pool.length) {
-    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><i class="ti ti-user-off" style="font-size:36px;display:block;margin-bottom:10px;color:#ddd"></i>ไม่พบข้อมูลครู</div>`;
-    return;
-  }
-
-  const frag = document.createDocumentFragment();
-  AppState.pool.forEach((t, i) => {
-    const avatarClass = t.type === 'retired' ? 't-avatar retired' : t.type === 'foreign' ? 't-avatar foreign' : 't-avatar';
-    const initials = t.type === 'foreign' ? t.name.split(' ').filter(w => w).map(w => w[0]).join('').slice(0, 2) : getInitials(t.name + ' ' + t.surname);
-    const badge = t.type === 'retired' ? `<span class="t-badge retired">ครูเกษียณ ${t.retiredYear || ''}</span>` : t.type === 'foreign' ? `<span class="t-badge foreign">${t.nationality || 'Foreign'}</span>` : '';
-    
-    const finalImgUrl = typeof getDriveImageUrl === 'function' ? getDriveImageUrl(t.imgUrl) : t.imgUrl;
-    const avatarContent = t.imgUrl ? `<img src="${esc(finalImgUrl)}" style="width:100%;height:100%;object-fit:cover;">` : initials;
-
-    const div = document.createElement('div');
-    div.className = 't-card';
-    div.dataset.idx = i;
-    div.innerHTML = `
-      <div class="t-card-header">
-        <div class="${avatarClass}">${avatarContent}</div>
-        <div>
-          <div class="t-name">${esc(t.name)}${t.surname ? ' ' + esc(t.surname) : ''}</div>
-          <div class="t-code">รหัส ${t.code} • อายุ ${t.age} ปี</div>
-          ${badge}
-        </div>
-      </div>
-      <div class="t-info">
-        ${t.subject ? `<div class="t-info-row"><i class="ti ti-book"></i><span>${esc(t.subject)}${t.level ? ' (' + esc(t.level) + ')' : ''}</span></div>` : ''}
-        ${t.role ? `<div class="t-info-row"><i class="ti ti-building"></i><span>${esc(t.role)}</span></div>` : ''}
-        ${t.major ? `<div class="t-info-row"><i class="ti ti-school"></i><span>${esc(t.major)}</span></div>` : ''}
-        ${t.phone && t.phone !== '-' ? `<div class="t-info-row"><i class="ti ti-phone"></i><span>${esc(t.phone)}</span></div>` : ''}
-      </div>
-    `;
-    frag.appendChild(div);
-  });
-  grid.appendChild(frag);
-}
-
-// ==================== DATA FETCHING (FIRESTORE) ====================
-async function initData() {
-  try {
-    const [eventsSnapshot, teachersSnapshot] = await Promise.all([
-      db.collection('events').get(),
-      db.collection('teachers').get()
-    ]);
-
-    AppState.events = eventsSnapshot.docs.map(doc => doc.data());
-    AppState.teachers = teachersSnapshot.docs.map(doc => doc.data());
-
-    document.getElementById('loading-overlay').style.display = 'none';
-    renderAllEvents();
-    renderTeacherStats();
-    if (document.getElementById('page-teachers').classList.contains('active')) {
-      renderTeachers();
-    }
-  } catch (error) {
-    console.error("Error loading data:", error);
-    showToast('ไม่สามารถดึงข้อมูลจากฐานข้อมูลได้', 'error');
-    document.getElementById('loading-overlay').style.display = 'none';
-  }
-}
-
-// ==================== EVENTS RENDERING ====================
 function renderStats() {
   const now = new Date();
   const thisMonth = AppState.events.filter(e => {
@@ -639,97 +1158,55 @@ function renderStats() {
   });
   const depts = [...new Set(AppState.events.map(e => e.dept))];
   const upcoming = AppState.events.filter(e => new Date(e.date) >= new Date(now.toDateString()));
-  
   const container = document.getElementById('stats-bar');
-  const frag = document.createDocumentFragment();
-  
   const statData = [
-    { num: AppState.events.length, label: 'กิจกรรมทั้งหมด' },
-    { num: thisMonth.length, label: 'เดือนนี้' },
-    { num: upcoming.length, label: 'กิจกรรมที่จะมาถึง' },
-    { num: depts.length, label: 'ฝ่ายที่เกี่ยวข้อง' }
+    { num: AppState.events.length, label: 'กิจกรรมทั้งหมด', icon: '📌' },
+    { num: thisMonth.length, label: 'เดือนนี้', icon: '📅' },
+    { num: upcoming.length, label: 'กิจกรรมที่จะมาถึง', icon: '🔔' },
+    { num: depts.length, label: 'ฝ่ายที่เกี่ยวข้อง', icon: '🏢' }
   ];
-
-  statData.forEach(item => {
-    const div = document.createElement('div');
-    div.className = 'stat-card';
-    div.innerHTML = `<div class="stat-num">${item.num}</div><div class="stat-label">${item.label}</div>`;
-    frag.appendChild(div);
-  });
-  
-  container.innerHTML = '';
-  container.appendChild(frag);
+  container.innerHTML = statData.map(s =>
+    `<div class="stat-card"><div class="stat-num">${s.num}</div><div class="stat-label">${s.icon} ${s.label}</div></div>`
+  ).join('');
 }
 
 function renderCalendar() {
   const hdr = document.getElementById('cal-header');
-  const hdrFrag = document.createDocumentFragment();
-  
-  // 1. วาดส่วนหัวของวัน (จันทร์-อาทิตย์ พร้อมสีวันหยุด)
-  CONSTANTS.DAYS_TH.forEach((d, index) => {
-    const div = document.createElement('div');
-    let hClass = 'cal-hcell';
-    if (index === 0) hClass += ' sun'; // วันอาทิตย์
-    if (index === 6) hClass += ' sat'; // วันเสาร์
-    div.className = hClass;
-    div.textContent = d;
-    hdrFrag.appendChild(div);
-  });
-  hdr.innerHTML = '';
-  hdr.appendChild(hdrFrag);
+  hdr.innerHTML = CONSTANTS.DAYS_TH.map((d, i) =>
+    `<div class="cal-hcell${i===0?' sun':i===6?' sat':''}">${d}</div>`
+  ).join('');
 
   document.getElementById('month-label').textContent = `${CONSTANTS.MONTHS_TH[AppState.ui.curMonth]} ${AppState.ui.curYear + 543}`;
-  
+
   const first = new Date(AppState.ui.curYear, AppState.ui.curMonth, 1).getDay();
   const days = new Date(AppState.ui.curYear, AppState.ui.curMonth + 1, 0).getDate();
   const today = new Date();
-  
   const calGrid = document.getElementById('cal-grid');
-  const gridFrag = document.createDocumentFragment();
-  
-  // 2. เติมช่องว่างของเดือนก่อนหน้า
+  let html = '';
+
   for (let i = 0; i < first; i++) {
     const d = new Date(AppState.ui.curYear, AppState.ui.curMonth, 0 - first + i + 2);
-    const div = document.createElement('div');
-    div.className = 'cal-day other-month';
-    div.innerHTML = `<div class="day-num">${d.getDate()}</div>`;
-    gridFrag.appendChild(div);
+    html += `<div class="cal-day other-month"><div class="day-num">${d.getDate()}</div></div>`;
   }
-  
-  // 3. วาดวันที่ของเดือนปัจจุบัน
-  for (let d = 1; d <= days; d++) {
-    const isToday = today.getFullYear() === AppState.ui.curYear && today.getMonth() === AppState.ui.curMonth && today.getDate() === d;
-    const ds = `${AppState.ui.curYear}-${String(AppState.ui.curMonth + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-    const shortDs = `${String(AppState.ui.curMonth + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-    
-    // ดึงข้อมูลกิจกรรม
-    const dayEvts = AppState.events.filter(e => e.date === ds || (e.endDate && ds >= e.date && ds <= e.endDate));
-    const dots = dayEvts.slice(0, 2).map(e => `<div class="ev-dot"><div class="dot" style="background:${e.color}"></div><span>${e.name}</span></div>`).join('');
-    const more = dayEvts.length > 2 ? `<div style="font-size:9px;color:#888">+${dayEvts.length - 2} อื่นๆ</div>` : '';
-    
-    // เช็ควันหยุดราชการ (เช็คแบบ ปี-เดือน-วัน ก่อน ถ้าไม่มีค่อยหาแบบ เดือน-วัน)
-    const holidayName = CONSTANTS.HOLIDAYS_TH[ds] || CONSTANTS.HOLIDAYS_TH[shortDs];
-    const dayOfWeek = new Date(AppState.ui.curYear, AppState.ui.curMonth, d).getDay();
-    
-    // กำหนด Class สีให้ปฏิทิน
-    let classNames = 'cal-day';
-    if (holidayName) classNames += ' holiday';
-    else if (dayOfWeek === 0) classNames += ' sunday';
-    else if (dayOfWeek === 6) classNames += ' saturday';
-    if (isToday) classNames += ' today';
-    
-    // สร้างแท็กชื่อวันหยุด (ถ้ามี)
-    const holidayBadge = holidayName ? `<div class="holiday-lbl" title="${holidayName}">${holidayName}</div>` : '';
 
-    const div = document.createElement('div');
-    div.className = classNames;
-    div.onclick = () => jumpToDay(ds);
-    div.innerHTML = `<div class="day-num">${d}</div>${holidayBadge}${dots}${more}`;
-    gridFrag.appendChild(div);
+  for (let d = 1; d <= days; d++) {
+    const isToday = today.getFullYear()===AppState.ui.curYear && today.getMonth()===AppState.ui.curMonth && today.getDate()===d;
+    const ds = `${AppState.ui.curYear}-${String(AppState.ui.curMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const shortDs = `${String(AppState.ui.curMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const dayEvts = AppState.events.filter(e => e.date===ds || (e.endDate && ds>=e.date && ds<=e.endDate));
+    const dots = dayEvts.slice(0,2).map(e => `<div class="ev-dot"><div class="dot" style="background:${e.color}"></div><span>${e.name}</span></div>`).join('');
+    const more = dayEvts.length > 2 ? `<div style="font-size:9px;color:var(--text-soft)">+${dayEvts.length-2} อื่นๆ</div>` : '';
+    const holidayName = CONSTANTS.HOLIDAYS_TH[ds] || CONSTANTS.HOLIDAYS_TH[shortDs];
+    const dow = new Date(AppState.ui.curYear, AppState.ui.curMonth, d).getDay();
+    let cls = 'cal-day';
+    if (holidayName) cls += ' holiday';
+    else if (dow===0) cls += ' sunday';
+    else if (dow===6) cls += ' saturday';
+    if (isToday) cls += ' today';
+    const hBadge = holidayName ? `<div class="holiday-lbl" title="${holidayName}">${holidayName}</div>` : '';
+    html += `<div class="${cls}" onclick="jumpToDay('${ds}')"><div class="day-num">${d}</div>${hBadge}${dots}${more}</div>`;
   }
-  
-  calGrid.innerHTML = '';
-  calGrid.appendChild(gridFrag);
+  calGrid.innerHTML = html;
 }
 
 function jumpToDay(ds) {
@@ -753,36 +1230,13 @@ function toggleCalView() {
 function renderFilters() {
   const depts = [...new Set(AppState.events.map(e => e.dept))];
   const bar = document.getElementById('filter-bar');
-  const frag = document.createDocumentFragment();
-  
-  const btnAll = document.createElement('button');
-  btnAll.className = `fchip${AppState.ui.filterDept === 'all' ? ' active' : ''}`;
-  btnAll.textContent = 'ทั้งหมด';
-  btnAll.onclick = function() { setFilter('all', this); };
-  frag.appendChild(btnAll);
-
+  let html = `<button class="fchip${AppState.ui.filterDept==='all'?' active':''}" onclick="setFilter('all',this)">ทั้งหมด</button>`;
   depts.forEach(d => {
-    const btn = document.createElement('button');
-    btn.className = `fchip${AppState.ui.filterDept === d ? ' active' : ''}`;
-    btn.textContent = d;
-    btn.onclick = function() { setFilter(d, this); };
-    frag.appendChild(btn);
+    html += `<button class="fchip${AppState.ui.filterDept===d?' active':''}" onclick="setFilter('${d.replace(/'/g,"\\'") }',this)">${d}</button>`;
   });
-
-  bar.innerHTML = '';
-  bar.appendChild(frag);
-
+  bar.innerHTML = html;
   const dl = document.getElementById('dept-list');
-  if (dl) {
-    const dlFrag = document.createDocumentFragment();
-    depts.forEach(d => {
-      const opt = document.createElement('option');
-      opt.value = d;
-      dlFrag.appendChild(opt);
-    });
-    dl.innerHTML = '';
-    dl.appendChild(dlFrag);
-  }
+  if (dl) dl.innerHTML = depts.map(d => `<option value="${esc(d)}">`).join('');
 }
 
 function setFilter(dept, btn) {
@@ -792,46 +1246,30 @@ function setFilter(dept, btn) {
   renderList();
 }
 
-function renderList(focusDate = null) {
+function renderList(focusDate=null) {
   const lv = document.getElementById('ev-list');
-  let evts = [...AppState.events].sort((a, b) => a.date.localeCompare(b.date));
-  
+  let evts = [...AppState.events].sort((a,b) => a.date.localeCompare(b.date));
   if (AppState.ui.filterDept !== 'all') evts = evts.filter(e => e.dept === AppState.ui.filterDept);
-  if (focusDate) evts = evts.filter(e => e.date === focusDate || (e.endDate && focusDate >= e.date && focusDate <= e.endDate));
-  
+  if (focusDate) evts = evts.filter(e => e.date===focusDate || (e.endDate && focusDate>=e.date && focusDate<=e.endDate));
   lv.innerHTML = '';
   if (!evts.length) {
-    lv.innerHTML = `<div class="empty-state"><i class="ti ti-calendar-off" style="font-size:36px;display:block;margin-bottom:10px;color:#ddd"></i>ยังไม่มีกิจกรรม</div>`;
+    lv.innerHTML = `<div class="empty-state"><i class="ti ti-calendar-off" style="font-size:40px;display:block;margin-bottom:12px"></i>ยังไม่มีกิจกรรม</div>`;
     return;
   }
-  
-  const frag = document.createDocumentFragment();
-  evts.forEach(e => {
+  lv.innerHTML = evts.map(e => {
     const d = new Date(e.date);
-    const range = e.endDate && e.endDate !== e.date ? ` — ${new Date(e.endDate).getDate()} ${CONSTANTS.MONTHS_TH[new Date(e.endDate).getMonth()].slice(0, 3)}` : '';
+    const range = e.endDate && e.endDate !== e.date ? ` — ${new Date(e.endDate).getDate()} ${CONSTANTS.MONTHS_TH[new Date(e.endDate).getMonth()].slice(0,3)}` : '';
     const chip = e.drive ? `<a class="file-chip" href="${esc(e.drive)}" target="_blank" rel="noopener"><i class="ti ti-file" style="font-size:12px"></i> เปิดไฟล์ Google Drive</a>` : '';
-    
-    const actionBtns = AppState.user ? `
-      <div class="btn-actions">
-        <button class="btn-ic edit" onclick="openEventModal('${e.id}')" title="แก้ไข"><i class="ti ti-edit"></i></button>
-        <button class="btn-ic del" onclick="confirmDelete('${e.id}','event')" title="ลบ"><i class="ti ti-trash"></i></button>
-      </div>` : '';
-
-    const div = document.createElement('div');
-    div.className = 'ev-card';
-    div.innerHTML = `
-      <div class="ev-left"><div class="ev-day">${d.getDate()}</div><div class="ev-month-lbl">${CONSTANTS.MONTHS_TH[d.getMonth()].slice(0, 3)} ${d.getFullYear() + 543}${range}</div></div>
+    const actions = AppState.user ? `<div class="btn-actions"><button class="btn-ic edit" onclick="openEventModal('${e.id}')" title="แก้ไข"><i class="ti ti-edit"></i></button><button class="btn-ic del" onclick="confirmDelete('${e.id}','event')" title="ลบ"><i class="ti ti-trash"></i></button></div>` : '';
+    return `<div class="ev-card" style="border-left:4px solid ${e.color}">
+      <div class="ev-left"><div class="ev-day">${d.getDate()}</div><div class="ev-month-lbl">${CONSTANTS.MONTHS_TH[d.getMonth()].slice(0,3)} ${d.getFullYear()+543}${range}</div></div>
       <div class="ev-body">
         <div class="ev-title">${esc(e.name)}</div>
-        <div style="margin-top:4px"><span class="dept-badge" style="background:${e.color}22;color:${e.color}">${esc(e.dept)}</span></div>
+        <div style="margin-top:5px"><span class="dept-badge" style="background:${e.color}20;color:${e.color};border:1px solid ${e.color}40">${esc(e.dept)}</span></div>
         ${e.desc ? `<div class="ev-desc">${esc(e.desc)}</div>` : ''}
         ${chip}
-      </div>
-      ${actionBtns}
-    `;
-    frag.appendChild(div);
-  });
-  lv.appendChild(frag);
+      </div>${actions}</div>`;
+  }).join('');
 }
 
 function changeMonth(d) {
@@ -841,11 +1279,10 @@ function changeMonth(d) {
   renderCalendar();
 }
 
-function openEventModal(id = null) {
+function openEventModal(id=null) {
   AppState.ui.editId = id;
   document.getElementById('event-modal-wrap').style.display = 'block';
   document.getElementById('ev-modal-title').textContent = id ? 'แก้ไขกิจกรรม' : 'เพิ่มกิจกรรมใหม่';
-  
   if (id) {
     const e = AppState.events.find(ev => ev.id === id);
     document.getElementById('f-name').value = e.name;
@@ -856,8 +1293,8 @@ function openEventModal(id = null) {
     document.getElementById('f-drive').value = e.drive || '';
     AppState.ui.selColor = e.color;
   } else {
-    ['f-name', 'f-dept', 'f-desc', 'f-drive'].forEach(fid => document.getElementById(fid).value = '');
-    document.getElementById('f-date').value = ''; 
+    ['f-name','f-dept','f-desc','f-drive'].forEach(fid => document.getElementById(fid).value = '');
+    document.getElementById('f-date').value = '';
     document.getElementById('f-end').value = '';
     AppState.ui.selColor = CONSTANTS.COLORS[0];
   }
@@ -865,23 +1302,12 @@ function openEventModal(id = null) {
   updateDrivePreview();
 }
 
-function closeEventModal() {
-  document.getElementById('event-modal-wrap').style.display = 'none';
-  AppState.ui.editId = null;
-}
+function closeEventModal() { document.getElementById('event-modal-wrap').style.display = 'none'; AppState.ui.editId = null; }
 
 function renderColorPicker() {
-  const wrap = document.getElementById('color-swatches');
-  const frag = document.createDocumentFragment();
-  CONSTANTS.COLORS.forEach(c => {
-    const div = document.createElement('div');
-    div.className = `cswatch${c === AppState.ui.selColor ? ' selected' : ''}`;
-    div.style.background = c;
-    div.onclick = () => { AppState.ui.selColor = c; renderColorPicker(); };
-    frag.appendChild(div);
-  });
-  wrap.innerHTML = '';
-  wrap.appendChild(frag);
+  document.getElementById('color-swatches').innerHTML = CONSTANTS.COLORS.map(c =>
+    `<div class="cswatch${c===AppState.ui.selColor?' selected':''}" style="background:${c}" onclick="AppState.ui.selColor='${c}';renderColorPicker()"></div>`
+  ).join('');
 }
 
 function updateDrivePreview() {
@@ -890,74 +1316,46 @@ function updateDrivePreview() {
   if (url) {
     prev.style.display = 'flex';
     const isPdf = url.toLowerCase().includes('pdf') || url.includes('/d/');
-    prev.innerHTML = `<i class="ti ti-${isPdf ? 'file-type-pdf' : 'photo'}" style="font-size:18px;color:${isPdf ? '#A32D2D' : '#185FA5'}"></i><span>${isPdf ? 'PDF' : 'รูปภาพ'} — ${url.slice(0, 50)}</span>`;
-  } else {
-    prev.style.display = 'none';
-  }
+    prev.innerHTML = `<i class="ti ti-${isPdf?'file-type-pdf':'photo'}" style="font-size:18px;color:${isPdf?'var(--accent)':'var(--blue)'}"></i><span>${isPdf?'PDF':'รูปภาพ'} — ${url.slice(0,50)}</span>`;
+  } else { prev.style.display = 'none'; }
 }
 
 async function saveEvent() {
   if (!AppState.user) return showToast('กรุณาเข้าสู่ระบบก่อน', 'error');
-
   const name = document.getElementById('f-name').value.trim();
   const dept = document.getElementById('f-dept').value.trim();
   const date = document.getElementById('f-date').value;
-  
-  if (!name || !dept || !date) return showToast('กรุณากรอกชื่อกิจกรรม ฝ่าย และวันที่', 'error');
-  
+  if (!name || !dept || !date) return showToast('กรุณากรอกข้อมูลที่จำเป็น', 'error');
   const endDate = document.getElementById('f-end').value;
   if (endDate && endDate < date) return showToast('วันที่สิ้นสุดต้องไม่น้อยกว่าวันที่เริ่ม', 'error');
-  
   const ev = {
-    id: AppState.ui.editId || uid(),
-    name, dept, date, endDate,
+    id: AppState.ui.editId || uid(), name, dept, date, endDate,
     desc: document.getElementById('f-desc').value.trim(),
     drive: document.getElementById('f-drive').value.trim(),
     color: AppState.ui.selColor
   };
-
   try {
     await db.collection('events').doc(ev.id).set(ev);
-    
-    if (AppState.ui.editId) {
-      AppState.events = AppState.events.map(e => e.id === AppState.ui.editId ? ev : e);
-    } else {
-      AppState.events.push(ev);
-    }
-    
-    closeEventModal();
-    renderAllEvents();
-    showToast(AppState.ui.editId ? 'แก้ไขกิจกรรมแล้ว ✓' : 'เพิ่มกิจกรรมแล้ว ✓');
-  } catch (error) {
-    showToast('บันทึกข้อมูลล้มเหลว: ' + error.message, 'error');
-  }
+    if (AppState.ui.editId) AppState.events = AppState.events.map(e => e.id===AppState.ui.editId ? ev : e);
+    else AppState.events.push(ev);
+    closeEventModal(); renderAllEvents();
+    showToast(AppState.ui.editId ? '✏️ แก้ไขกิจกรรมแล้ว' : '✅ เพิ่มกิจกรรมแล้ว');
+  } catch (error) { showToast('บันทึกข้อมูลล้มเหลว: ' + error.message, 'error'); }
 }
 
-// ==================== TEACHERS RENDERING ====================
 function renderTeacherStats() {
-  const thai = AppState.teachers.filter(t => t.type === 'thai');
-  const retired = AppState.teachers.filter(t => t.type === 'retired');
-  const foreign = AppState.teachers.filter(t => t.type === 'foreign');
-  
-  const bar = document.getElementById('teacher-stats-bar');
-  const frag = document.createDocumentFragment();
-
+  const thai = AppState.teachers.filter(t => t.type==='thai');
+  const retired = AppState.teachers.filter(t => t.type==='retired');
+  const foreign = AppState.teachers.filter(t => t.type==='foreign');
   const stats = [
-    { num: AppState.teachers.length, label: 'บุคลากรทั้งหมด', color: '#0F6E56' },
-    { num: thai.length, label: 'ครูไทย', color: '#0F6E56' },
-    { num: retired.length, label: 'ครูเกษียณ', color: '#BA7517' },
-    { num: foreign.length, label: 'ครูต่างชาติ', color: '#185FA5' }
+    { num: AppState.teachers.length, label: 'บุคลากรทั้งหมด', icon: '👥', color: 'var(--primary)' },
+    { num: thai.length, label: 'ครูไทย', icon: '🇹🇭', color: 'var(--primary)' },
+    { num: retired.length, label: 'ครูเกษียณ', icon: '🎓', color: '#C47A12' },
+    { num: foreign.length, label: 'ครูต่างชาติ', icon: '🌏', color: 'var(--blue)' }
   ];
-
-  stats.forEach(s => {
-    const div = document.createElement('div');
-    div.className = 'stat-card';
-    div.innerHTML = `<div class="stat-num" style="color:${s.color}">${s.num}</div><div class="stat-label">${s.label}</div>`;
-    frag.appendChild(div);
-  });
-
-  bar.innerHTML = '';
-  bar.appendChild(frag);
+  document.getElementById('teacher-stats-bar').innerHTML = stats.map(s =>
+    `<div class="stat-card"><div class="stat-num" style="color:${s.color}">${s.num}</div><div class="stat-label">${s.icon} ${s.label}</div></div>`
+  ).join('');
 }
 
 function setTeacherType(type, btn) {
@@ -970,59 +1368,68 @@ function setTeacherType(type, btn) {
 function getInitials(name) {
   if (!name) return '?';
   const parts = name.trim().split(' ');
-  if (parts.length >= 2) return parts[parts.length - 2].charAt(0) + (parts[parts.length - 1] ? parts[parts.length - 1].charAt(0) : '');
+  if (parts.length >= 2) return parts[parts.length-2].charAt(0) + (parts[parts.length-1] ? parts[parts.length-1].charAt(0) : '');
   return name.charAt(0).toUpperCase();
 }
 
 function renderTeachers() {
+  const grid = document.getElementById('teacher-grid');
+  const toolbar = document.querySelector('.teacher-toolbar');
+  const statsBar = document.getElementById('teacher-stats-bar');
+
+  if (!AppState.user) {
+    if(toolbar) toolbar.style.display = 'none';
+    if(statsBar) statsBar.style.display = 'none';
+    grid.innerHTML = `<div class="lock-screen">
+      <div class="lock-icon-wrap">🔒</div>
+      <div class="lock-title">ข้อมูลสงวนสิทธิ์เฉพาะบุคลากร</div>
+      <div class="lock-desc">กรุณาเข้าสู่ระบบด้วยบัญชี Google เพื่อดูทะเบียนข้อมูลครู</div>
+    </div>`;
+    return;
+  }
+
+  if(toolbar) toolbar.style.display = 'flex';
+  if(statsBar) statsBar.style.display = 'grid';
+
   const q = document.getElementById('teacher-search').value.trim().toLowerCase();
-  
   AppState.pool = AppState.teachers.filter(t => {
     if (AppState.ui.teacherType !== 'all' && t.type !== AppState.ui.teacherType) return false;
     if (q) {
-      const fullName = `${t.name} ${t.surname} ${t.code} ${t.subject} ${t.major} ${t.role} ${t.nationality || ''}`.toLowerCase();
+      const fullName = `${t.name} ${t.surname} ${t.code} ${t.subject} ${t.major} ${t.role} ${t.nationality||''}`.toLowerCase();
       return fullName.includes(q);
     }
     return true;
   });
 
   document.getElementById('teacher-count').textContent = `พบ ${AppState.pool.length} คน`;
-  const grid = document.getElementById('teacher-grid');
   grid.innerHTML = '';
 
   if (!AppState.pool.length) {
-    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><i class="ti ti-user-off" style="font-size:36px;display:block;margin-bottom:10px;color:#ddd"></i>ไม่พบข้อมูลครู</div>`;
+    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><i class="ti ti-user-off" style="font-size:40px;display:block;margin-bottom:12px"></i>ไม่พบข้อมูลครู</div>`;
     return;
   }
 
-  const frag = document.createDocumentFragment();
-  AppState.pool.forEach((t, i) => {
-    const avatarClass = t.type === 'retired' ? 't-avatar retired' : t.type === 'foreign' ? 't-avatar foreign' : 't-avatar';
-    const initials = t.type === 'foreign' ? t.name.split(' ').filter(w => w).map(w => w[0]).join('').slice(0, 2) : getInitials(t.name + ' ' + t.surname);
-    const badge = t.type === 'retired' ? `<span class="t-badge retired">ครูเกษียณ ${t.retiredYear || ''}</span>` : t.type === 'foreign' ? `<span class="t-badge foreign">${t.nationality || 'Foreign'}</span>` : '';
-    
-    const div = document.createElement('div');
-    div.className = 't-card';
-    div.dataset.idx = i;
-    div.innerHTML = `
+  grid.innerHTML = AppState.pool.map((t, i) => {
+    const avatarClass = `t-avatar${t.type==='retired'?' retired':t.type==='foreign'?' foreign':''}`;
+    const initials = t.type==='foreign' ? t.name.split(' ').filter(w=>w).map(w=>w[0]).join('').slice(0,2) : getInitials(t.name+' '+t.surname);
+    const badge = t.type==='retired' ? `<span class="t-badge retired">ครูเกษียณ ${t.retiredYear||''}</span>` : t.type==='foreign' ? `<span class="t-badge foreign">${t.nationality||'Foreign'}</span>` : '';
+    return `<div class="t-card" data-idx="${i}">
       <div class="t-card-header">
         <div class="${avatarClass}">${initials}</div>
         <div>
-          <div class="t-name">${esc(t.name)}${t.surname ? ' ' + esc(t.surname) : ''}</div>
+          <div class="t-name">${esc(t.name)}${t.surname?' '+esc(t.surname):''}</div>
           <div class="t-code">รหัส ${t.code} • อายุ ${t.age} ปี</div>
           ${badge}
         </div>
       </div>
       <div class="t-info">
-        ${t.subject ? `<div class="t-info-row"><i class="ti ti-book"></i><span>${esc(t.subject)}${t.level ? ' (' + esc(t.level) + ')' : ''}</span></div>` : ''}
+        ${t.subject ? `<div class="t-info-row"><i class="ti ti-book"></i><span>${esc(t.subject)}${t.level?' ('+esc(t.level)+')':''}</span></div>` : ''}
         ${t.role ? `<div class="t-info-row"><i class="ti ti-building"></i><span>${esc(t.role)}</span></div>` : ''}
         ${t.major ? `<div class="t-info-row"><i class="ti ti-school"></i><span>${esc(t.major)}</span></div>` : ''}
-        ${t.phone && t.phone !== '-' ? `<div class="t-info-row"><i class="ti ti-phone"></i><span>${esc(t.phone)}</span></div>` : ''}
+        ${t.phone && t.phone!=='-' ? `<div class="t-info-row"><i class="ti ti-phone"></i><span>${esc(t.phone)}</span></div>` : ''}
       </div>
-    `;
-    frag.appendChild(div);
-  });
-  grid.appendChild(frag);
+    </div>`;
+  }).join('');
 }
 
 document.getElementById('teacher-grid').addEventListener('click', function(e) {
@@ -1035,34 +1442,29 @@ document.getElementById('teacher-grid').addEventListener('click', function(e) {
 function showTeacherDetail(idx) {
   const t = AppState.pool[idx];
   if (!t) return;
-
-  const avatarClass = t.type === 'retired' ? 'tmodal-avatar retired' : t.type === 'foreign' ? 'tmodal-avatar foreign' : 'tmodal-avatar';
-  const initials = t.type === 'foreign' ? t.name.split(' ').filter(w => w).map(w => w[0]).join('').slice(0, 2) : getInitials(t.name + ' ' + t.surname);
-  const badge = t.type === 'retired' ? `<span class="t-badge retired" style="font-size:12px;padding:4px 12px">ครูเกษียณ ${t.retiredYear || ''}</span>` : t.type === 'foreign' ? `<span class="t-badge foreign" style="font-size:12px;padding:4px 12px">${t.nationality || 'Foreign'}</span>` : '';
-  
+  const avatarClass = `tmodal-avatar${t.type==='retired'?' retired':t.type==='foreign'?' foreign':''}`;
+  const initials = t.type==='foreign' ? t.name.split(' ').filter(w=>w).map(w=>w[0]).join('').slice(0,2) : getInitials(t.name+' '+t.surname);
+  const badge = t.type==='retired' ? `<span class="t-badge retired" style="font-size:12px;padding:4px 14px">ครูเกษียณ ${t.retiredYear||''}</span>` : t.type==='foreign' ? `<span class="t-badge foreign" style="font-size:12px;padding:4px 14px">${t.nationality||'Foreign'}</span>` : '';
   const actionBtns = AppState.user ? `
     <button class="fchip" style="display:inline-flex;align-items:center;gap:5px" onclick="openTeacherEditModal('${t.id}')"><i class="ti ti-edit"></i> แก้ไข</button>
-    <button class="fchip" style="display:inline-flex;align-items:center;gap:5px;color:#c0392b;border-color:#c0392b" onclick="closeTeacherModal();confirmDelete('${t.id}','teacher')"><i class="ti ti-trash"></i> ลบ</button>
-  ` : '';
-
+    <button class="fchip" style="display:inline-flex;align-items:center;gap:5px;color:var(--accent);border-color:var(--accent)" onclick="closeTeacherModal();confirmDelete('${t.id}','teacher')"><i class="ti ti-trash"></i> ลบ</button>` : '';
   document.getElementById('tmodal-body').innerHTML = `
     <div class="${avatarClass}">${initials}</div>
-    <div class="tmodal-name">${esc(t.name)}${t.surname ? ' ' + esc(t.surname) : ''}</div>
+    <div class="tmodal-name">${esc(t.name)}${t.surname?' '+esc(t.surname):''}</div>
     <div class="tmodal-code">รหัส ${t.code} ${badge}</div>
-    <div style="height:0.5px;background:#eee;margin:1rem 0"></div>
+    <div style="height:1px;background:var(--border);margin:1.25rem 0"></div>
     <div class="tmodal-grid">
-      <div class="tmodal-field"><label>วุฒิการศึกษา</label><p>${esc(t.edu) || '-'}</p></div>
-      <div class="tmodal-field"><label>สาขาวิชาเอก</label><p>${esc(t.major) || '-'}</p></div>
-      <div class="tmodal-field"><label>วิชาที่สอน</label><p>${esc(t.subject) || '-'}</p></div>
-      <div class="tmodal-field"><label>ระดับชั้น</label><p>${esc(t.level) || '-'}</p></div>
+      <div class="tmodal-field"><label>วุฒิการศึกษา</label><p>${esc(t.edu)||'-'}</p></div>
+      <div class="tmodal-field"><label>สาขาวิชาเอก</label><p>${esc(t.major)||'-'}</p></div>
+      <div class="tmodal-field"><label>วิชาที่สอน</label><p>${esc(t.subject)||'-'}</p></div>
+      <div class="tmodal-field"><label>ระดับชั้น</label><p>${esc(t.level)||'-'}</p></div>
       ${t.role ? `<div class="tmodal-field full"><label>งาน/หน้าที่</label><p>${esc(t.role)}</p></div>` : ''}
-      <div class="tmodal-field"><label>อายุ</label><p>${t.age || '-'} ปี</p></div>
-      <div class="tmodal-field"><label>วันเริ่มทำงาน</label><p>${esc(t.start) || '-'}</p></div>
-      <div class="tmodal-field"><label>เบอร์โทรศัพท์</label><p>${t.phone && t.phone !== '-' ? `<a href="tel:${esc(t.phone)}" style="color:#0F6E56;text-decoration:none">${esc(t.phone)}</a>` : '-'}</p></div>
+      <div class="tmodal-field"><label>อายุ</label><p>${t.age||'-'} ปี</p></div>
+      <div class="tmodal-field"><label>วันเริ่มทำงาน</label><p>${esc(t.start)||'-'}</p></div>
+      <div class="tmodal-field"><label>เบอร์โทรศัพท์</label><p>${t.phone && t.phone!=='-' ? `<a href="tel:${esc(t.phone)}" style="color:var(--primary);text-decoration:none">${esc(t.phone)}</a>` : '-'}</p></div>
       ${t.nationality ? `<div class="tmodal-field"><label>สัญชาติ</label><p>${esc(t.nationality)}</p></div>` : ''}
       ${t.retiredYear ? `<div class="tmodal-field"><label>ปีที่เกษียณ</label><p>${esc(t.retiredYear)}</p></div>` : ''}
-    </div>
-  `;
+    </div>`;
   document.getElementById('tmodal-actions').innerHTML = actionBtns;
   document.getElementById('teacher-modal-wrap').style.display = 'block';
 }
@@ -1072,9 +1474,7 @@ function closeTeacherModal() { document.getElementById('teacher-modal-wrap').sty
 function openTeacherAddModal() {
   AppState.ui.editTeacherId = null;
   document.getElementById('teacher-modal-title').textContent = 'เพิ่มข้อมูลครูใหม่';
-  ['tf-name','tf-surname','tf-code','tf-edu','tf-major','tf-subject','tf-level','tf-role','tf-phone','tf-start','tf-nationality','tf-retired'].forEach(id => {
-    document.getElementById(id).value = '';
-  });
+  ['tf-name','tf-surname','tf-code','tf-edu','tf-major','tf-subject','tf-level','tf-role','tf-phone','tf-start','tf-nationality','tf-retired'].forEach(id => { document.getElementById(id).value = ''; });
   document.getElementById('tf-age').value = '';
   document.getElementById('tf-type').value = 'thai';
   toggleTeacherTypeFields('thai');
@@ -1085,54 +1485,45 @@ function openTeacherEditModal(id) {
   closeTeacherModal();
   const t = AppState.teachers.find(x => x.id === id);
   if (!t) return;
-  
   AppState.ui.editTeacherId = id;
   document.getElementById('teacher-modal-title').textContent = 'แก้ไขข้อมูลครู';
-  document.getElementById('tf-name').value = t.name || '';
-  document.getElementById('tf-surname').value = t.surname || '';
-  document.getElementById('tf-code').value = t.code || '';
-  document.getElementById('tf-edu').value = t.edu || '';
-  document.getElementById('tf-major').value = t.major || '';
-  document.getElementById('tf-subject').value = t.subject || '';
-  document.getElementById('tf-level').value = t.level || '';
-  document.getElementById('tf-role').value = t.role || '';
-  document.getElementById('tf-age').value = t.age || '';
-  document.getElementById('tf-phone').value = t.phone || '';
-  document.getElementById('tf-start').value = t.start || '';
-  document.getElementById('tf-nationality').value = t.nationality || '';
-  document.getElementById('tf-retired').value = t.retiredYear || '';
+  document.getElementById('tf-name').value = t.name||'';
+  document.getElementById('tf-surname').value = t.surname||'';
+  document.getElementById('tf-code').value = t.code||'';
+  document.getElementById('tf-edu').value = t.edu||'';
+  document.getElementById('tf-major').value = t.major||'';
+  document.getElementById('tf-subject').value = t.subject||'';
+  document.getElementById('tf-level').value = t.level||'';
+  document.getElementById('tf-role').value = t.role||'';
+  document.getElementById('tf-age').value = t.age||'';
+  document.getElementById('tf-phone').value = t.phone||'';
+  document.getElementById('tf-start').value = t.start||'';
+  document.getElementById('tf-nationality').value = t.nationality||'';
+  document.getElementById('tf-retired').value = t.retiredYear||'';
   document.getElementById('tf-type').value = t.type;
-  
   toggleTeacherTypeFields(t.type);
   document.getElementById('teacher-edit-modal-wrap').style.display = 'block';
 }
 
 function toggleTeacherTypeFields(type) {
-  document.getElementById('tf-nationality-wrap').style.display = type === 'foreign' ? 'block' : 'none';
-  document.getElementById('tf-retired-wrap').style.display = type === 'retired' ? 'block' : 'none';
+  document.getElementById('tf-nationality-wrap').style.display = type==='foreign' ? 'block' : 'none';
+  document.getElementById('tf-retired-wrap').style.display = type==='retired' ? 'block' : 'none';
 }
 
 document.getElementById('tf-type').addEventListener('change', function() { toggleTeacherTypeFields(this.value); });
 
-function closeTeacherEditModal() { 
-  document.getElementById('teacher-edit-modal-wrap').style.display = 'none'; 
-  AppState.ui.editTeacherId = null; 
-}
+function closeTeacherEditModal() { document.getElementById('teacher-edit-modal-wrap').style.display = 'none'; AppState.ui.editTeacherId = null; }
 
 async function saveTeacher() {
   if (!AppState.user) return showToast('กรุณาเข้าสู่ระบบก่อน', 'error');
-
   const name = document.getElementById('tf-name').value.trim();
   const code = document.getElementById('tf-code').value.trim();
   const type = document.getElementById('tf-type').value;
-  
   if (!name || !code) return showToast('กรุณากรอกชื่อและรหัสครู', 'error');
-
   const obj = {
-    id: AppState.ui.editTeacherId || uid(),
-    type, code, name,
+    id: AppState.ui.editTeacherId || uid(), type, code, name,
     surname: document.getElementById('tf-surname').value.trim(),
-    age: parseInt(document.getElementById('tf-age').value) || 0,
+    age: parseInt(document.getElementById('tf-age').value)||0,
     edu: document.getElementById('tf-edu').value.trim(),
     major: document.getElementById('tf-major').value.trim(),
     subject: document.getElementById('tf-subject').value.trim(),
@@ -1143,91 +1534,61 @@ async function saveTeacher() {
     nationality: document.getElementById('tf-nationality').value.trim(),
     retiredYear: document.getElementById('tf-retired').value.trim(),
   };
-
   try {
     await db.collection('teachers').doc(obj.id).set(obj);
-
-    if (AppState.ui.editTeacherId) {
-      AppState.teachers = AppState.teachers.map(t => t.id === AppState.ui.editTeacherId ? obj : t);
-    } else {
-      AppState.teachers.push(obj);
-    }
-    
+    if (AppState.ui.editTeacherId) AppState.teachers = AppState.teachers.map(t => t.id===AppState.ui.editTeacherId ? obj : t);
+    else AppState.teachers.push(obj);
     closeTeacherEditModal();
     renderTeacherStats();
     renderTeachers();
-    showToast(AppState.ui.editTeacherId ? 'แก้ไขข้อมูลครูแล้ว ✓' : 'เพิ่มข้อมูลครูแล้ว ✓');
-  } catch (error) {
-    showToast('บันทึกข้อมูลล้มเหลว: ' + error.message, 'error');
-  }
+    showToast(AppState.ui.editTeacherId ? '✏️ แก้ไขข้อมูลครูแล้ว' : '✅ เพิ่มข้อมูลครูแล้ว');
+  } catch (error) { showToast('บันทึกข้อมูลล้มเหลว: ' + error.message, 'error'); }
 }
 
-// ==================== DELETION ====================
-function confirmDelete(id, type = 'event') {
+function confirmDelete(id, type='event') {
   AppState.ui.pendingDelId = { id, type };
-  document.getElementById('confirm-msg').textContent = type === 'teacher' ? 'ยืนยันการลบข้อมูลครูคนนี้?' : 'ยืนยันการลบกิจกรรมนี้?';
+  document.getElementById('confirm-msg').textContent = type==='teacher' ? 'ยืนยันการลบข้อมูลครูคนนี้?' : 'ยืนยันการลบกิจกรรมนี้?';
   document.getElementById('confirm-wrap').style.display = 'block';
-  
   document.getElementById('confirm-del-btn').onclick = async () => {
     if (!AppState.user) return showToast('ไม่มีสิทธิ์ลบข้อมูล', 'error');
-    
     try {
-      if (type === 'event') {
+      if (type==='event') {
         await db.collection('events').doc(id).delete();
         AppState.events = AppState.events.filter(e => e.id !== id);
         renderAllEvents();
-        showToast('ลบกิจกรรมแล้ว');
+        showToast('🗑️ ลบกิจกรรมแล้ว');
       } else {
         await db.collection('teachers').doc(id).delete();
         AppState.teachers = AppState.teachers.filter(t => t.id !== id);
         renderTeacherStats();
         renderTeachers();
-        showToast('ลบข้อมูลครูแล้ว');
+        showToast('🗑️ ลบข้อมูลครูแล้ว');
       }
-    } catch (error) {
-      showToast('เกิดข้อผิดพลาด: ' + error.message, 'error');
-    }
+    } catch (error) { showToast('เกิดข้อผิดพลาด: ' + error.message, 'error'); }
     closeConfirm();
   };
 }
 
-function closeConfirm() {
-  document.getElementById('confirm-wrap').style.display = 'none';
-  AppState.ui.pendingDelId = null;
-}
+function closeConfirm() { document.getElementById('confirm-wrap').style.display = 'none'; AppState.ui.pendingDelId = null; }
 
-// ==================== NAVIGATION ====================
-function renderAllEvents() {
-  renderStats();
-  renderCalendar();
-  if (!AppState.ui.calMode) renderList();
-  renderFilters();
-}
+function renderAllEvents() { renderStats(); renderCalendar(); if (!AppState.ui.calMode) renderList(); renderFilters(); }
 
 function switchPage(name, btn) {
   document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   btn.classList.add('active');
-  document.getElementById('page-' + name).classList.add('active');
-  
+  document.getElementById('page-'+name).classList.add('active');
   if (AppState.user) {
-    document.getElementById('btn-add-event').style.display = name === 'events' ? 'flex' : 'none';
-    document.getElementById('btn-add-teacher').style.display = name === 'teachers' ? 'flex' : 'none';
+    document.getElementById('btn-add-event').style.display = name==='events' ? 'flex' : 'none';
+    document.getElementById('btn-add-teacher').style.display = name==='teachers' ? 'flex' : 'none';
   } else {
     document.getElementById('btn-add-event').style.display = 'none';
     document.getElementById('btn-add-teacher').style.display = 'none';
   }
-
-  if (name === 'teachers') {
-    renderTeacherStats();
-    renderTeachers();
-  }
+  if (name==='teachers') { renderTeacherStats(); renderTeachers(); }
 }
 
-// ==================== INIT ====================
-window.onload = () => {
-  initData();
-};
+window.onload = () => { initData(); };
 </script>
 </body>
 </html>
