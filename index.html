@@ -391,62 +391,20 @@ const AppState = {
   }
 };
 
-c// 1. เพิ่มกล่องเก็บอีเมลที่มีสิทธิ์ใน CONSTANTS
+// 1. เพิ่มกล่องเก็บอีเมลที่มีสิทธิ์ใน CONSTANTS
 const CONSTANTS = {
   COLORS: ['#0F6E56','#185FA5','#BA7517','#A32D2D','#993556','#533AB7','#3B6D11','#0E7490'],
   DAYS_TH: ['อา','จ','อ','พ','พฤ','ศ','ส'],
   MONTHS_TH: ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'],
   
-  // ใส่อีเมลที่อนุญาตให้เข้าใช้งานได้ที่นี่ (เพิ่มลดได้ตามต้องการ)
+  // รายชื่ออีเมลที่อนุญาตให้เข้าใช้งาน
   ALLOWED_USERS: [
     'kaeacer@gmail.com',
     'saipin@pramanda.ac.th'
-  ]
-};
+  ],
 
-// 2. ปรับตัวเช็คตอนล็อกอินใน auth.onAuthStateChanged
-auth.onAuthStateChanged(user => {
-  AppState.user = user;
-  const loginBtn = document.getElementById('btn-login');
-  const btnAddEvent = document.getElementById('btn-add-event');
-  const btnAddTeacher = document.getElementById('btn-add-teacher');
-  const isEventPage = document.getElementById('page-events').classList.contains('active');
-
-  if (user) {
-    // 🛡️ เพิ่มจุดเช็คสิทธิ์ตรงนี้: ถ้าอีเมลไม่อยู่ในรายชื่อที่กำหนด ให้เตะออกทันที
-    if (!CONSTANTS.ALLOWED_USERS.includes(user.email)) {
-      showToast('อีเมลนี้ไม่มีสิทธิ์เข้าใช้งานระบบ', 'error');
-      AppState.user = null;
-      AppState.teachers = [];
-      auth.signOut(); // สั่ง Logout ออกจากระบบอัตโนมัติ
-      return;
-    }
-
-    loginBtn.innerHTML = `<i class="ti ti-logout"></i> <span id="login-text">ออกจากระบบ</span>`;
-    loginBtn.style.color = '#c0392b';
-    loginBtn.style.background = '#fdecea';
-    
-    if (isEventPage) btnAddEvent.style.display = 'flex';
-    else btnAddTeacher.style.display = 'flex';
-    
-    showToast(`ยินดีต้อนรับ ${user.displayName}`);
-    loadTeachersData();
-  } else {
-    // ... ส่วนของ else โค้ดเดิมทั้งหมด ...
-    loginBtn.innerHTML = `<i class="ti ti-login"></i> <span id="login-text">เข้าสู่ระบบ</span>`;
-    loginBtn.style.color = '#0F6E56';
-    loginBtn.style.background = '#fff';
-    btnAddEvent.style.display = 'none';
-    btnAddTeacher.style.display = 'none';
-    AppState.teachers = []; 
-    if (!isEventPage) renderTeachers();
-  }
-  
-  if (isEventPage) renderAllEvents();
-});
-  // เพิ่มข้อมูลวันหยุดราชการตรงนี้
+  // ข้อมูลวันหยุดราชการ
   HOLIDAYS_TH: {
-    // วันหยุดแบบ Fix วันที่ (เดือน-วัน)
     '01-01': 'วันขึ้นปีใหม่',
     '04-06': 'วันจักรี',
     '04-13': 'วันสงกรานต์',
@@ -462,8 +420,6 @@ auth.onAuthStateChanged(user => {
     '12-05': 'วันพ่อแห่งชาติ',
     '12-10': 'วันรัฐธรรมนูญ',
     '12-31': 'วันสิ้นปี',
-    
-    // วันหยุดทางศาสนา/ชดเชยที่เปลี่ยนไปทุกปี (ใช้รูปแบบ ปี-เดือน-วัน) ตัวอย่างปี 2026 (2569)
     '2026-03-03': 'วันมาฆบูชา',
     '2026-05-31': 'วันวิสาขบูชา',
     '2026-06-01': 'ชดเชยวันวิสาขบูชา',
