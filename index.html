@@ -1,0 +1,1053 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>บอร์ดประชาสัมพันธ์ โรงเรียนพระมารดานิจจานุเคราะห์</title>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js"></script>
+
+<style>
+/* CSS คงเดิมทั้งหมด */
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Sarabun',sans-serif;background:#F2F4F3;color:#1a1a1a;min-height:100vh}
+.topbar{background:#0F6E56;color:#fff;padding:0 1.5rem;height:60px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50;box-shadow:0 2px 10px rgba(0,0,0,0.2)}
+.topbar-brand{display:flex;align-items:center;gap:10px}
+.topbar-title{font-size:17px;font-weight:600}
+.topbar-sub{font-size:11px;opacity:0.8;margin-top:1px}
+.btn-add{display:flex;align-items:center;gap:6px;padding:8px 16px;background:#fff;color:#0F6E56;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Sarabun',sans-serif;transition:all 0.15s;white-space:nowrap}
+.btn-add:hover{background:#E1F5EE}
+.nav-tabs{background:#fff;border-bottom:1px solid #e5e5e5;padding:0 1.5rem;display:flex;gap:0;position:sticky;top:60px;z-index:40;box-shadow:0 1px 4px rgba(0,0,0,0.06)}
+.nav-tab{padding:14px 18px;font-size:14px;font-weight:500;cursor:pointer;color:#666;border-bottom:3px solid transparent;background:none;border-top:none;border-left:none;border-right:none;font-family:'Sarabun',sans-serif;display:flex;align-items:center;gap:7px;transition:all 0.15s;white-space:nowrap}
+.nav-tab.active{color:#0F6E56;border-bottom-color:#0F6E56}
+.nav-tab:hover{color:#1D9E75}
+.page{display:none;padding:1.5rem}
+.page.active{display:block}
+.container{max-width:1100px;margin:0 auto}
+
+/* Stats */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:1.5rem}
+.stat-card{background:#fff;border-radius:10px;padding:14px 16px;text-align:center;border:0.5px solid #e0e0e0}
+.stat-num{font-size:26px;font-weight:700;color:#0F6E56}
+.stat-label{font-size:11px;color:#777;margin-top:3px}
+
+/* Calendar */
+.cal-toolbar{display:flex;align-items:center;gap:12px;margin-bottom:1rem;flex-wrap:wrap}
+.month-nav button{background:#fff;border:0.5px solid #ccc;border-radius:8px;padding:7px 12px;cursor:pointer;font-family:'Sarabun',sans-serif;font-size:14px;color:#333;transition:background 0.1s}
+.month-nav button:hover{background:#f0f0f0}
+.month-label{font-size:18px;font-weight:700;color:#1a1a1a}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}
+.cal-hcell{text-align:center;font-size:12px;font-weight:700;color:#666;padding:6px 0}
+.cal-day{min-height:80px;border-radius:8px;border:0.5px solid #e5e5e5;padding:7px;background:#fff;cursor:pointer;transition:all 0.15s}
+.cal-day:hover{border-color:#0F6E56;background:#FAFFFE}
+.cal-day.other-month{background:#f8f8f8;opacity:0.5}
+.cal-day.today{border-color:#0F6E56;border-width:2px}
+.day-num{font-size:12px;font-weight:700;color:#333;margin-bottom:4px}
+.cal-day.today .day-num{color:#0F6E56}
+.ev-dot{display:flex;align-items:center;gap:4px;margin-bottom:2px}
+.dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.ev-dot span{font-size:10px;color:#555;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100px}
+
+/* Event list */
+.filter-bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:1rem}
+.fchip{font-size:12px;padding:5px 14px;border-radius:99px;border:0.5px solid #ccc;background:#fff;cursor:pointer;color:#555;font-family:'Sarabun',sans-serif;font-weight:500;transition:all 0.15s}
+.fchip.active{background:#0F6E56;color:#fff;border-color:#0F6E56}
+.fchip:hover:not(.active){background:#f0f0f0}
+.ev-list{display:flex;flex-direction:column;gap:10px}
+.ev-card{background:#fff;border:0.5px solid #e0e0e0;border-radius:12px;padding:14px 16px;display:flex;align-items:flex-start;gap:14px;transition:box-shadow 0.15s}
+.ev-card:hover{box-shadow:0 2px 12px rgba(0,0,0,0.08)}
+.ev-left{display:flex;flex-direction:column;align-items:center;min-width:52px;background:#E1F5EE;border-radius:8px;padding:10px 6px;text-align:center;flex-shrink:0}
+.ev-day{font-size:22px;font-weight:700;color:#0F6E56;line-height:1}
+.ev-month-lbl{font-size:10px;color:#1D9E75;margin-top:3px;font-weight:500}
+.ev-body{flex:1;min-width:0}
+.ev-title{font-size:15px;font-weight:600;color:#1a1a1a;margin-bottom:5px}
+.dept-badge{font-size:11px;padding:3px 10px;border-radius:8px;font-weight:500}
+.ev-desc{font-size:13px;color:#666;margin-top:5px;line-height:1.5}
+.file-chip{display:inline-flex;align-items:center;gap:5px;font-size:12px;color:#185FA5;background:#E6F1FB;padding:4px 10px;border-radius:8px;text-decoration:none;margin-top:6px;font-weight:500;transition:background 0.1s}
+.file-chip:hover{background:#cde2f7}
+.btn-actions{display:flex;gap:4px;flex-shrink:0}
+.btn-ic{background:none;border:none;cursor:pointer;padding:7px;border-radius:8px;font-size:16px;display:flex;align-items:center;justify-content:center;transition:all 0.15s;color:#999}
+.btn-ic.edit:hover{color:#185FA5;background:#E6F1FB}
+.btn-ic.del:hover{color:#c0392b;background:#fdecea}
+.empty-state{text-align:center;padding:4rem 1rem;color:#aaa;font-size:14px}
+
+/* Teacher Directory */
+.teacher-toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:1.5rem}
+.search-box{display:flex;align-items:center;gap:8px;background:#fff;border:0.5px solid #ccc;border-radius:10px;padding:8px 14px;flex:1;min-width:220px;max-width:400px;transition:border-color 0.15s}
+.search-box:focus-within{border-color:#0F6E56;box-shadow:0 0 0 3px rgba(15,110,86,0.1)}
+.search-box i{color:#999;font-size:18px;flex-shrink:0}
+.search-box input{border:none;outline:none;font-family:'Sarabun',sans-serif;font-size:14px;background:none;width:100%;color:#1a1a1a}
+.teacher-type-tabs{display:flex;gap:6px;flex-wrap:wrap}
+.tt-tab{padding:7px 14px;font-size:13px;font-weight:500;border-radius:8px;border:0.5px solid #ccc;background:#fff;cursor:pointer;color:#666;font-family:'Sarabun',sans-serif;transition:all 0.15s}
+.tt-tab.active{background:#0F6E56;color:#fff;border-color:#0F6E56}
+.tt-tab:hover:not(.active){background:#f0f0f0}
+.teacher-count{font-size:13px;color:#888;white-space:nowrap;padding-top:2px}
+.teacher-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px}
+.t-card{background:#fff;border:0.5px solid #e0e0e0;border-radius:12px;padding:16px;transition:box-shadow 0.15s;cursor:pointer}
+.t-card:hover{box-shadow:0 3px 16px rgba(0,0,0,0.1);border-color:#b2d8ce}
+.t-card-header{display:flex;align-items:center;gap:12px;margin-bottom:10px}
+.t-avatar{width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#1D9E75,#0F6E56);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:#fff;flex-shrink:0;overflow:hidden}
+.t-avatar.retired{background:linear-gradient(135deg,#BA7517,#EF9F27)}
+.t-avatar.foreign{background:linear-gradient(135deg,#185FA5,#378ADD)}
+.t-name{font-size:15px;font-weight:600;color:#1a1a1a;line-height:1.3}
+.t-code{font-size:11px;color:#888;margin-top:2px}
+.t-badge{display:inline-block;font-size:10px;padding:2px 8px;border-radius:99px;margin-top:3px;font-weight:500}
+.t-badge.retired{background:#FEF3C7;color:#92400E}
+.t-badge.foreign{background:#DBEAFE;color:#1E40AF}
+.t-info{font-size:12px;color:#555;display:flex;flex-direction:column;gap:4px}
+.t-info-row{display:flex;align-items:flex-start;gap:6px}
+.t-info-row i{font-size:14px;color:#0F6E56;flex-shrink:0;margin-top:1px}
+
+/* Modals */
+.tmodal-bg{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);display:flex;align-items:flex-start;justify-content:center;z-index:200;padding:1rem;overflow-y:auto}
+.tmodal{background:#fff;border-radius:16px;width:100%;max-width:520px;padding:2rem;box-shadow:0 20px 60px rgba(0,0,0,0.25);position:relative;margin:auto}
+.tmodal-close{position:absolute;top:14px;right:14px;background:none;border:none;cursor:pointer;font-size:20px;color:#aaa;width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:50%;transition:all 0.15s}
+.tmodal-close:hover{background:#f0f0f0;color:#333}
+.tmodal-avatar{width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,#1D9E75,#0F6E56);display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:700;color:#fff;margin:0 auto 1rem;overflow:hidden}
+.tmodal-avatar.retired{background:linear-gradient(135deg,#BA7517,#EF9F27)}
+.tmodal-avatar.foreign{background:linear-gradient(135deg,#185FA5,#378ADD)}
+.tmodal-name{text-align:center;font-size:19px;font-weight:700;margin-bottom:4px}
+.tmodal-code{text-align:center;font-size:13px;color:#888;margin-bottom:1rem}
+.tmodal-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.tmodal-field{background:#F8FAF9;border-radius:8px;padding:10px 12px}
+.tmodal-field label{display:block;font-size:10px;color:#777;margin-bottom:3px;font-weight:600;text-transform:uppercase;letter-spacing:.03em}
+.tmodal-field p{font-size:13px;color:#1a1a1a;font-weight:500}
+.tmodal-field.full{grid-column:1/-1}
+
+.modal-wrap{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.45);display:flex;align-items:center;justify-content:center;z-index:100;padding:1rem}
+.modal{background:#fff;border-radius:14px;width:100%;max-width:500px;padding:1.75rem;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.2)}
+.modal h3{font-size:17px;font-weight:600;margin-bottom:1.25rem}
+.field{margin-bottom:1rem}
+.field label{display:block;font-size:13px;color:#555;margin-bottom:5px;font-weight:500}
+.field input,.field select,.field textarea{width:100%;padding:9px 12px;border:0.5px solid #ccc;border-radius:8px;font-family:'Sarabun',sans-serif;font-size:14px;outline:none;background:#fff;color:#1a1a1a;transition:border-color 0.15s}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:#0F6E56;box-shadow:0 0 0 3px rgba(15,110,86,0.1)}
+.field textarea{height:76px;resize:vertical}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.drive-wrap{display:flex;gap:8px;align-items:center}
+.drive-icon{font-size:22px;flex-shrink:0}
+.drive-preview{display:flex;align-items:center;gap:8px;background:#f5f5f5;border-radius:8px;padding:9px 12px;font-size:12px;color:#555;margin-top:6px}
+.color-swatches{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+.cswatch{width:26px;height:26px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:transform 0.1s}
+.cswatch.selected{transform:scale(1.3);border-color:#1a1a1a}
+.modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:1.25rem}
+.btn-cancel{background:#f0f0f0;border:none;border-radius:8px;padding:9px 18px;font-size:14px;cursor:pointer;color:#333;font-family:'Sarabun',sans-serif;font-weight:500}
+.btn-cancel:hover{background:#e0e0e0}
+.btn-save{padding:9px 24px;background:#0F6E56;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:'Sarabun',sans-serif}
+.btn-save:hover{background:#085041}
+
+/* Confirmation & Toasts */
+.confirm-bg{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.4);display:flex;align-items:center;justify-content:center;z-index:200;padding:1rem}
+.confirm-box{background:#fff;border-radius:12px;padding:1.5rem;max-width:340px;width:100%;text-align:center;box-shadow:0 10px 40px rgba(0,0,0,0.2)}
+.confirm-box p{font-size:15px;margin-bottom:1.25rem;color:#333}
+.confirm-actions{display:flex;justify-content:center;gap:10px}
+.btn-del-confirm{padding:9px 22px;background:#c0392b;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:'Sarabun',sans-serif}
+.toast{position:fixed;bottom:24px;right:24px;background:#1a1a1a;color:#fff;padding:12px 20px;border-radius:10px;font-size:14px;z-index:999;opacity:0;transform:translateY(10px);transition:all 0.3s;pointer-events:none}
+.toast.show{opacity:1;transform:translateY(0)}
+.toast.success{background:#0F6E56}
+.toast.error{background:#c0392b}
+
+.teacher-add-btn{display:flex;align-items:center;gap:6px;padding:8px 16px;background:#0F6E56;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Sarabun',sans-serif;transition:all 0.15s;white-space:nowrap}
+.teacher-add-btn:hover{background:#085041}
+.teacher-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-bottom:1.5rem}
+
+/* Loading Overlay */
+#loading-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(255,255,255,0.8);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:600;color:#0F6E56}
+.spinner{border:4px solid #f3f3f3;border-top:4px solid #0F6E56;border-radius:50%;width:40px;height:40px;animation:spin 1s linear infinite;margin-bottom:10px}
+@keyframes spin{0%{transform:rotate(0deg)} 100%{transform:rotate(360deg)}}
+
+@media(max-width:600px){
+  .topbar{padding:0 1rem}
+  .nav-tabs{padding:0 0.5rem;overflow-x:auto}
+  .nav-tab{padding:12px 12px;font-size:13px}
+  .page{padding:1rem}
+  .teacher-grid{grid-template-columns:1fr}
+  .field-row{grid-template-columns:1fr}
+  .tmodal-grid{grid-template-columns:1fr}
+  .teacher-toolbar{flex-direction:column;align-items:stretch}
+  .search-box{max-width:100%}
+}
+</style>
+</head>
+<body>
+
+<div id="loading-overlay">
+  <div class="spinner"></div>
+  กำลังโหลดข้อมูลจากระบบคลาวด์...
+</div>
+
+<div class="topbar">
+  <div class="topbar-brand">
+    <div>
+      <div class="topbar-title">📢 โรงเรียนพระมารดานิจจานุเคราะห์</div>
+      <div class="topbar-sub">ระบบประชาสัมพันธ์และทะเบียนบุคลากร</div>
+    </div>
+  </div>
+  <div style="display:flex;gap:8px;align-items:center">
+    <!-- Auth Button -->
+    <button class="btn-add" id="btn-login" onclick="toggleAuth()">
+      <i class="ti ti-login"></i> <span id="login-text">เข้าสู่ระบบ</span>
+    </button>
+    <button class="btn-add" onclick="openEventModal()" id="btn-add-event" style="display:none">
+      <i class="ti ti-plus"></i> เพิ่มกิจกรรม
+    </button>
+    <button class="teacher-add-btn" onclick="openTeacherAddModal()" id="btn-add-teacher" style="display:none">
+      <i class="ti ti-user-plus"></i> เพิ่มครู
+    </button>
+  </div>
+</div>
+
+<div class="nav-tabs">
+  <button class="nav-tab active" onclick="switchPage('events',this)"><i class="ti ti-calendar-event"></i> กิจกรรม</button>
+  <button class="nav-tab" onclick="switchPage('teachers',this)"><i class="ti ti-users"></i> ทะเบียนครู</button>
+</div>
+
+<!-- ========== EVENTS PAGE ========== -->
+<div class="page active" id="page-events">
+<div class="container">
+  <div style="margin-bottom:1.5rem"></div>
+  <div class="stats" id="stats-bar"></div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:1rem;align-items:center;justify-content:space-between">
+    <div class="month-nav" style="display:flex;align-items:center;gap:10px" id="month-nav-wrap">
+      <button onclick="changeMonth(-1)"><i class="ti ti-chevron-left"></i></button>
+      <span class="month-label" id="month-label"></span>
+      <button onclick="changeMonth(1)"><i class="ti ti-chevron-right"></i></button>
+    </div>
+    <button class="fchip" onclick="toggleCalView()" id="cal-toggle" style="display:flex;align-items:center;gap:6px"><i class="ti ti-list"></i> ดูรายการ</button>
+  </div>
+  <div id="cal-view">
+    <div class="cal-grid" id="cal-header"></div>
+    <div class="cal-grid" id="cal-grid" style="margin-top:5px"></div>
+  </div>
+  <div id="list-section" style="display:none">
+    <div class="filter-bar" id="filter-bar"></div>
+    <div class="ev-list" id="ev-list"></div>
+  </div>
+</div>
+</div>
+
+<!-- ========== TEACHERS PAGE ========== -->
+<div class="page" id="page-teachers">
+<div class="container">
+  <div style="margin-bottom:1.5rem"></div>
+  <div class="teacher-stats" id="teacher-stats-bar"></div>
+  <div class="teacher-toolbar">
+    <div class="search-box">
+      <i class="ti ti-search"></i>
+      <input type="text" id="teacher-search" placeholder="ค้นหาชื่อ นามสกุล รหัส หรือวิชา..." oninput="renderTeachers()">
+    </div>
+    <div class="teacher-type-tabs">
+      <button class="tt-tab active" onclick="setTeacherType('all',this)">ทั้งหมด</button>
+      <button class="tt-tab" onclick="setTeacherType('thai',this)">ครูไทย</button>
+      <button class="tt-tab" onclick="setTeacherType('retired',this)">ครูเกษียณ</button>
+      <button class="tt-tab" onclick="setTeacherType('foreign',this)">ครูต่างชาติ</button>
+    </div>
+    <span class="teacher-count" id="teacher-count"></span>
+  </div>
+  <div class="teacher-grid" id="teacher-grid"></div>
+</div>
+</div>
+
+<!-- Event Modal -->
+<div id="event-modal-wrap" style="display:none">
+  <div class="modal-wrap" onclick="closeEventModal()">
+    <div class="modal" onclick="event.stopPropagation()">
+      <h3 id="ev-modal-title">เพิ่มกิจกรรมใหม่</h3>
+      <div class="field-row">
+        <div class="field"><label>ชื่อกิจกรรม *</label><input type="text" id="f-name" placeholder="เช่น ประชุมผู้ปกครอง"></div>
+        <div class="field"><label>ฝ่าย / กลุ่มงาน *</label><input type="text" id="f-dept" placeholder="เช่น ฝ่ายวิชาการ" list="dept-list"></div>
+      </div>
+      <datalist id="dept-list"></datalist>
+      <div class="field-row">
+        <div class="field"><label>วันที่เริ่ม *</label><input type="date" id="f-date"></div>
+        <div class="field"><label>วันที่สิ้นสุด</label><input type="date" id="f-end"></div>
+      </div>
+      <div class="field"><label>รายละเอียด</label><textarea id="f-desc" placeholder="รายละเอียดเพิ่มเติม..."></textarea></div>
+      <div class="field">
+        <label><i class="ti ti-brand-google-drive" style="vertical-align:-2px"></i> ลิงก์ Google Drive (ไฟล์แนบ)</label>
+        <div class="drive-wrap">
+          <span class="drive-icon">📂</span>
+          <input type="url" id="f-drive" placeholder="https://drive.google.com/..." oninput="updateDrivePreview()">
+        </div>
+        <div class="drive-preview" id="f-preview" style="display:none"></div>
+      </div>
+      <div class="field"><label>สีประจำฝ่าย</label><div class="color-swatches" id="color-swatches"></div></div>
+      <div class="modal-actions">
+        <button class="btn-cancel" onclick="closeEventModal()">ยกเลิก</button>
+        <button class="btn-save" onclick="saveEvent()">💾 บันทึก</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Confirm Delete -->
+<div id="confirm-wrap" style="display:none">
+  <div class="confirm-bg">
+    <div class="confirm-box">
+      <p id="confirm-msg">ยืนยันการลบกิจกรรมนี้?</p>
+      <div class="confirm-actions">
+        <button class="btn-cancel" onclick="closeConfirm()">ยกเลิก</button>
+        <button class="btn-del-confirm" id="confirm-del-btn">ลบ</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Teacher Detail Modal -->
+<div id="teacher-modal-wrap" style="display:none">
+  <div class="tmodal-bg" onclick="closeTeacherModal()">
+    <div class="tmodal" onclick="event.stopPropagation()">
+      <button class="tmodal-close" onclick="closeTeacherModal()"><i class="ti ti-x"></i></button>
+      <div id="tmodal-body"></div>
+      <div style="display:flex;gap:8px;justify-content:center;margin-top:1.25rem" id="tmodal-actions"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Add/Edit Teacher Modal -->
+<div id="teacher-edit-modal-wrap" style="display:none">
+  <div class="modal-wrap" onclick="closeTeacherEditModal()">
+    <div class="modal" onclick="event.stopPropagation()" style="max-width:560px">
+      <h3 id="teacher-modal-title">เพิ่มข้อมูลครู</h3>
+      <div class="field-row">
+        <div class="field"><label>ชื่อ-นำหน้า *</label><input type="text" id="tf-name" placeholder="เช่น นางสาวสมใจ"></div>
+        <div class="field"><label>นามสกุล</label><input type="text" id="tf-surname" placeholder="นามสกุล"></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>รหัสครู *</label><input type="text" id="tf-code" placeholder="เช่น 00999"></div>
+        <div class="field"><label>ประเภท *</label>
+          <select id="tf-type">
+            <option value="thai">ครูไทย</option>
+            <option value="retired">ครูเกษียณ</option>
+            <option value="foreign">ครูต่างชาติ</option>
+          </select>
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>วุฒิการศึกษา</label><input type="text" id="tf-edu" placeholder="เช่น ปริญญาตรี"></div>
+        <div class="field"><label>สาขาวิชา</label><input type="text" id="tf-major" placeholder="เช่น ภาษาไทย"></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>วิชาที่สอน</label><input type="text" id="tf-subject" placeholder="เช่น คณิตศาสตร์"></div>
+        <div class="field"><label>ระดับชั้น</label><input type="text" id="tf-level" placeholder="เช่น ป.4"></div>
+      </div>
+      <div class="field"><label>งาน/หน้าที่รับผิดชอบ</label><input type="text" id="tf-role" placeholder="เช่น ฝ่ายวิชาการ งานทะเบียน"></div>
+      <div class="field-row">
+        <div class="field"><label>อายุ</label><input type="number" id="tf-age" placeholder="อายุ" min="20" max="80"></div>
+        <div class="field"><label>เบอร์โทรศัพท์</label><input type="text" id="tf-phone" placeholder="0xx-xxx-xxxx"></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>วันเริ่มทำงาน</label><input type="text" id="tf-start" placeholder="เช่น 16 พ.ค. 2540"></div>
+        <div class="field" id="tf-nationality-wrap"><label>สัญชาติ</label><input type="text" id="tf-nationality" placeholder="เช่น Philippines"></div>
+      </div>
+      <div class="field" id="tf-retired-wrap" style="display:none"><label>ปีที่เกษียณ</label><input type="text" id="tf-retired" placeholder="เช่น ปีที่ 3"></div>
+      <div class="modal-actions">
+        <button class="btn-cancel" onclick="closeTeacherEditModal()">ยกเลิก</button>
+        <button class="btn-save" onclick="saveTeacher()">💾 บันทึก</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ==================== STATE MANAGEMENT ====================
+const AppState = {
+  user: null,
+  events: [],
+  teachers: [],
+  pool: [],
+  ui: {
+    curYear: new Date().getFullYear(),
+    curMonth: new Date().getMonth(),
+    selColor: '#0F6E56',
+    editId: null,
+    pendingDelId: null,
+    calMode: true,
+    filterDept: 'all',
+    teacherType: 'all',
+    editTeacherId: null
+  }
+};
+
+const CONSTANTS = {
+  COLORS: ['#0F6E56','#185FA5','#BA7517','#A32D2D','#993556','#533AB7','#3B6D11','#0E7490'],
+  DAYS_TH: ['อา','จ','อ','พ','พฤ','ศ','ส'],
+  MONTHS_TH: ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม']
+};
+
+// ==================== FIREBASE INIT ====================
+// ⚠️ เปลี่ยนค่าเหล่านี้เป็น Project Firebase ของคุณ ⚠️
+const firebaseConfig = {
+  const firebaseConfig = {
+  apiKey: "AIzaSyDVNTbYqG8hGjyIH3gC59u6BTZseq64I_E",
+  authDomain: "prpmd-eed5f.firebaseapp.com",
+  databaseURL: "https://prpmd-eed5f-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "prpmd-eed5f",
+  storageBucket: "prpmd-eed5f.firebasestorage.app",
+  messagingSenderId: "697791334314",
+  appId: "1:697791334314:web:58b31a6911d61b75ce4dd3",
+  measurementId: "G-M1YCQ35W70"
+};
+
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+const provider = new firebase.auth.GoogleAuthProvider();
+
+// ==================== UTILS ====================
+function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2); }
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+function showToast(msg, type='success') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = `toast ${type} show`;
+  setTimeout(() => t.className = 'toast', 2500);
+}
+
+// ==================== AUTH ====================
+function toggleAuth() {
+  if (AppState.user) {
+    auth.signOut().then(() => showToast('ออกจากระบบเรียบร้อยแล้ว', 'success'));
+  } else {
+    auth.signInWithPopup(provider).catch(err => showToast(err.message, 'error'));
+  }
+}
+
+auth.onAuthStateChanged(user => {
+  AppState.user = user;
+  const loginBtn = document.getElementById('btn-login');
+  const btnAddEvent = document.getElementById('btn-add-event');
+  const btnAddTeacher = document.getElementById('btn-add-teacher');
+  const isEventPage = document.getElementById('page-events').classList.contains('active');
+
+  if (user) {
+    loginBtn.innerHTML = `<i class="ti ti-logout"></i> <span id="login-text">ออกจากระบบ</span>`;
+    loginBtn.style.color = '#c0392b';
+    loginBtn.style.background = '#fdecea';
+    
+    if (isEventPage) btnAddEvent.style.display = 'flex';
+    else btnAddTeacher.style.display = 'flex';
+    
+    showToast(`ยินดีต้อนรับ ${user.displayName}`);
+  } else {
+    loginBtn.innerHTML = `<i class="ti ti-login"></i> <span id="login-text">เข้าสู่ระบบ</span>`;
+    loginBtn.style.color = '#0F6E56';
+    loginBtn.style.background = '#fff';
+    
+    btnAddEvent.style.display = 'none';
+    btnAddTeacher.style.display = 'none';
+  }
+  
+  if (isEventPage) renderAllEvents();
+  else renderTeachers();
+});
+
+// ==================== DATA FETCHING (FIRESTORE) ====================
+async function initData() {
+  try {
+    const [eventsSnapshot, teachersSnapshot] = await Promise.all([
+      db.collection('events').get(),
+      db.collection('teachers').get()
+    ]);
+
+    AppState.events = eventsSnapshot.docs.map(doc => doc.data());
+    AppState.teachers = teachersSnapshot.docs.map(doc => doc.data());
+
+    document.getElementById('loading-overlay').style.display = 'none';
+    renderAllEvents();
+    renderTeacherStats();
+    if (document.getElementById('page-teachers').classList.contains('active')) {
+      renderTeachers();
+    }
+  } catch (error) {
+    console.error("Error loading data:", error);
+    showToast('ไม่สามารถดึงข้อมูลจากฐานข้อมูลได้', 'error');
+    document.getElementById('loading-overlay').style.display = 'none';
+  }
+}
+
+// ==================== EVENTS RENDERING ====================
+function renderStats() {
+  const now = new Date();
+  const thisMonth = AppState.events.filter(e => {
+    const d = new Date(e.date);
+    return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
+  });
+  const depts = [...new Set(AppState.events.map(e => e.dept))];
+  const upcoming = AppState.events.filter(e => new Date(e.date) >= new Date(now.toDateString()));
+  
+  const container = document.getElementById('stats-bar');
+  const frag = document.createDocumentFragment();
+  
+  const statData = [
+    { num: AppState.events.length, label: 'กิจกรรมทั้งหมด' },
+    { num: thisMonth.length, label: 'เดือนนี้' },
+    { num: upcoming.length, label: 'กิจกรรมที่จะมาถึง' },
+    { num: depts.length, label: 'ฝ่ายที่เกี่ยวข้อง' }
+  ];
+
+  statData.forEach(item => {
+    const div = document.createElement('div');
+    div.className = 'stat-card';
+    div.innerHTML = `<div class="stat-num">${item.num}</div><div class="stat-label">${item.label}</div>`;
+    frag.appendChild(div);
+  });
+  
+  container.innerHTML = '';
+  container.appendChild(frag);
+}
+
+function renderCalendar() {
+  const hdr = document.getElementById('cal-header');
+  const hdrFrag = document.createDocumentFragment();
+  CONSTANTS.DAYS_TH.forEach(d => {
+    const div = document.createElement('div');
+    div.className = 'cal-hcell';
+    div.textContent = d;
+    hdrFrag.appendChild(div);
+  });
+  hdr.innerHTML = '';
+  hdr.appendChild(hdrFrag);
+
+  document.getElementById('month-label').textContent = `${CONSTANTS.MONTHS_TH[AppState.ui.curMonth]} ${AppState.ui.curYear + 543}`;
+  
+  const first = new Date(AppState.ui.curYear, AppState.ui.curMonth, 1).getDay();
+  const days = new Date(AppState.ui.curYear, AppState.ui.curMonth + 1, 0).getDate();
+  const today = new Date();
+  
+  const calGrid = document.getElementById('cal-grid');
+  const gridFrag = document.createDocumentFragment();
+  
+  for (let i = 0; i < first; i++) {
+    const d = new Date(AppState.ui.curYear, AppState.ui.curMonth, 0 - first + i + 2);
+    const div = document.createElement('div');
+    div.className = 'cal-day other-month';
+    div.innerHTML = `<div class="day-num">${d.getDate()}</div>`;
+    gridFrag.appendChild(div);
+  }
+  
+  for (let d = 1; d <= days; d++) {
+    const isToday = today.getFullYear() === AppState.ui.curYear && today.getMonth() === AppState.ui.curMonth && today.getDate() === d;
+    const ds = `${AppState.ui.curYear}-${String(AppState.ui.curMonth + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+    const dayEvts = AppState.events.filter(e => e.date === ds || (e.endDate && ds >= e.date && ds <= e.endDate));
+    
+    const dots = dayEvts.slice(0, 2).map(e => `<div class="ev-dot"><div class="dot" style="background:${e.color}"></div><span>${e.name}</span></div>`).join('');
+    const more = dayEvts.length > 2 ? `<div style="font-size:9px;color:#888">+${dayEvts.length - 2} อื่นๆ</div>` : '';
+    
+    const div = document.createElement('div');
+    div.className = `cal-day${isToday ? ' today' : ''}`;
+    div.onclick = () => jumpToDay(ds);
+    div.innerHTML = `<div class="day-num">${d}</div>${dots}${more}`;
+    gridFrag.appendChild(div);
+  }
+  
+  calGrid.innerHTML = '';
+  calGrid.appendChild(gridFrag);
+}
+
+function jumpToDay(ds) {
+  AppState.ui.calMode = false;
+  document.getElementById('cal-view').style.display = 'none';
+  document.getElementById('list-section').style.display = 'block';
+  document.getElementById('cal-toggle').innerHTML = '<i class="ti ti-calendar"></i> ดูปฏิทิน';
+  AppState.ui.filterDept = 'all';
+  renderFilters();
+  renderList(ds);
+}
+
+function toggleCalView() {
+  AppState.ui.calMode = !AppState.ui.calMode;
+  document.getElementById('cal-view').style.display = AppState.ui.calMode ? 'block' : 'none';
+  document.getElementById('list-section').style.display = AppState.ui.calMode ? 'none' : 'block';
+  document.getElementById('cal-toggle').innerHTML = AppState.ui.calMode ? '<i class="ti ti-list"></i> ดูรายการ' : '<i class="ti ti-calendar"></i> ดูปฏิทิน';
+  if (!AppState.ui.calMode) renderList();
+}
+
+function renderFilters() {
+  const depts = [...new Set(AppState.events.map(e => e.dept))];
+  const bar = document.getElementById('filter-bar');
+  const frag = document.createDocumentFragment();
+  
+  const btnAll = document.createElement('button');
+  btnAll.className = `fchip${AppState.ui.filterDept === 'all' ? ' active' : ''}`;
+  btnAll.textContent = 'ทั้งหมด';
+  btnAll.onclick = function() { setFilter('all', this); };
+  frag.appendChild(btnAll);
+
+  depts.forEach(d => {
+    const btn = document.createElement('button');
+    btn.className = `fchip${AppState.ui.filterDept === d ? ' active' : ''}`;
+    btn.textContent = d;
+    btn.onclick = function() { setFilter(d, this); };
+    frag.appendChild(btn);
+  });
+
+  bar.innerHTML = '';
+  bar.appendChild(frag);
+
+  const dl = document.getElementById('dept-list');
+  if (dl) {
+    const dlFrag = document.createDocumentFragment();
+    depts.forEach(d => {
+      const opt = document.createElement('option');
+      opt.value = d;
+      dlFrag.appendChild(opt);
+    });
+    dl.innerHTML = '';
+    dl.appendChild(dlFrag);
+  }
+}
+
+function setFilter(dept, btn) {
+  AppState.ui.filterDept = dept;
+  document.querySelectorAll('#filter-bar .fchip').forEach(c => c.classList.remove('active'));
+  btn.classList.add('active');
+  renderList();
+}
+
+function renderList(focusDate = null) {
+  const lv = document.getElementById('ev-list');
+  let evts = [...AppState.events].sort((a, b) => a.date.localeCompare(b.date));
+  
+  if (AppState.ui.filterDept !== 'all') evts = evts.filter(e => e.dept === AppState.ui.filterDept);
+  if (focusDate) evts = evts.filter(e => e.date === focusDate || (e.endDate && focusDate >= e.date && focusDate <= e.endDate));
+  
+  lv.innerHTML = '';
+  if (!evts.length) {
+    lv.innerHTML = `<div class="empty-state"><i class="ti ti-calendar-off" style="font-size:36px;display:block;margin-bottom:10px;color:#ddd"></i>ยังไม่มีกิจกรรม</div>`;
+    return;
+  }
+  
+  const frag = document.createDocumentFragment();
+  evts.forEach(e => {
+    const d = new Date(e.date);
+    const range = e.endDate && e.endDate !== e.date ? ` — ${new Date(e.endDate).getDate()} ${CONSTANTS.MONTHS_TH[new Date(e.endDate).getMonth()].slice(0, 3)}` : '';
+    const chip = e.drive ? `<a class="file-chip" href="${esc(e.drive)}" target="_blank" rel="noopener"><i class="ti ti-file" style="font-size:12px"></i> เปิดไฟล์ Google Drive</a>` : '';
+    
+    const actionBtns = AppState.user ? `
+      <div class="btn-actions">
+        <button class="btn-ic edit" onclick="openEventModal('${e.id}')" title="แก้ไข"><i class="ti ti-edit"></i></button>
+        <button class="btn-ic del" onclick="confirmDelete('${e.id}','event')" title="ลบ"><i class="ti ti-trash"></i></button>
+      </div>` : '';
+
+    const div = document.createElement('div');
+    div.className = 'ev-card';
+    div.innerHTML = `
+      <div class="ev-left"><div class="ev-day">${d.getDate()}</div><div class="ev-month-lbl">${CONSTANTS.MONTHS_TH[d.getMonth()].slice(0, 3)} ${d.getFullYear() + 543}${range}</div></div>
+      <div class="ev-body">
+        <div class="ev-title">${esc(e.name)}</div>
+        <div style="margin-top:4px"><span class="dept-badge" style="background:${e.color}22;color:${e.color}">${esc(e.dept)}</span></div>
+        ${e.desc ? `<div class="ev-desc">${esc(e.desc)}</div>` : ''}
+        ${chip}
+      </div>
+      ${actionBtns}
+    `;
+    frag.appendChild(div);
+  });
+  lv.appendChild(frag);
+}
+
+function changeMonth(d) {
+  AppState.ui.curMonth += d;
+  if (AppState.ui.curMonth > 11) { AppState.ui.curMonth = 0; AppState.ui.curYear++; }
+  if (AppState.ui.curMonth < 0) { AppState.ui.curMonth = 11; AppState.ui.curYear--; }
+  renderCalendar();
+}
+
+function openEventModal(id = null) {
+  AppState.ui.editId = id;
+  document.getElementById('event-modal-wrap').style.display = 'block';
+  document.getElementById('ev-modal-title').textContent = id ? 'แก้ไขกิจกรรม' : 'เพิ่มกิจกรรมใหม่';
+  
+  if (id) {
+    const e = AppState.events.find(ev => ev.id === id);
+    document.getElementById('f-name').value = e.name;
+    document.getElementById('f-dept').value = e.dept;
+    document.getElementById('f-date').value = e.date;
+    document.getElementById('f-end').value = e.endDate || '';
+    document.getElementById('f-desc').value = e.desc || '';
+    document.getElementById('f-drive').value = e.drive || '';
+    AppState.ui.selColor = e.color;
+  } else {
+    ['f-name', 'f-dept', 'f-desc', 'f-drive'].forEach(fid => document.getElementById(fid).value = '');
+    document.getElementById('f-date').value = ''; 
+    document.getElementById('f-end').value = '';
+    AppState.ui.selColor = CONSTANTS.COLORS[0];
+  }
+  renderColorPicker();
+  updateDrivePreview();
+}
+
+function closeEventModal() {
+  document.getElementById('event-modal-wrap').style.display = 'none';
+  AppState.ui.editId = null;
+}
+
+function renderColorPicker() {
+  const wrap = document.getElementById('color-swatches');
+  const frag = document.createDocumentFragment();
+  CONSTANTS.COLORS.forEach(c => {
+    const div = document.createElement('div');
+    div.className = `cswatch${c === AppState.ui.selColor ? ' selected' : ''}`;
+    div.style.background = c;
+    div.onclick = () => { AppState.ui.selColor = c; renderColorPicker(); };
+    frag.appendChild(div);
+  });
+  wrap.innerHTML = '';
+  wrap.appendChild(frag);
+}
+
+function updateDrivePreview() {
+  const url = document.getElementById('f-drive').value.trim();
+  const prev = document.getElementById('f-preview');
+  if (url) {
+    prev.style.display = 'flex';
+    const isPdf = url.toLowerCase().includes('pdf') || url.includes('/d/');
+    prev.innerHTML = `<i class="ti ti-${isPdf ? 'file-type-pdf' : 'photo'}" style="font-size:18px;color:${isPdf ? '#A32D2D' : '#185FA5'}"></i><span>${isPdf ? 'PDF' : 'รูปภาพ'} — ${url.slice(0, 50)}</span>`;
+  } else {
+    prev.style.display = 'none';
+  }
+}
+
+async function saveEvent() {
+  if (!AppState.user) return showToast('กรุณาเข้าสู่ระบบก่อน', 'error');
+
+  const name = document.getElementById('f-name').value.trim();
+  const dept = document.getElementById('f-dept').value.trim();
+  const date = document.getElementById('f-date').value;
+  
+  if (!name || !dept || !date) return showToast('กรุณากรอกชื่อกิจกรรม ฝ่าย และวันที่', 'error');
+  
+  const endDate = document.getElementById('f-end').value;
+  if (endDate && endDate < date) return showToast('วันที่สิ้นสุดต้องไม่น้อยกว่าวันที่เริ่ม', 'error');
+  
+  const ev = {
+    id: AppState.ui.editId || uid(),
+    name, dept, date, endDate,
+    desc: document.getElementById('f-desc').value.trim(),
+    drive: document.getElementById('f-drive').value.trim(),
+    color: AppState.ui.selColor
+  };
+
+  try {
+    await db.collection('events').doc(ev.id).set(ev);
+    
+    if (AppState.ui.editId) {
+      AppState.events = AppState.events.map(e => e.id === AppState.ui.editId ? ev : e);
+    } else {
+      AppState.events.push(ev);
+    }
+    
+    closeEventModal();
+    renderAllEvents();
+    showToast(AppState.ui.editId ? 'แก้ไขกิจกรรมแล้ว ✓' : 'เพิ่มกิจกรรมแล้ว ✓');
+  } catch (error) {
+    showToast('บันทึกข้อมูลล้มเหลว: ' + error.message, 'error');
+  }
+}
+
+// ==================== TEACHERS RENDERING ====================
+function renderTeacherStats() {
+  const thai = AppState.teachers.filter(t => t.type === 'thai');
+  const retired = AppState.teachers.filter(t => t.type === 'retired');
+  const foreign = AppState.teachers.filter(t => t.type === 'foreign');
+  
+  const bar = document.getElementById('teacher-stats-bar');
+  const frag = document.createDocumentFragment();
+
+  const stats = [
+    { num: AppState.teachers.length, label: 'บุคลากรทั้งหมด', color: '#0F6E56' },
+    { num: thai.length, label: 'ครูไทย', color: '#0F6E56' },
+    { num: retired.length, label: 'ครูเกษียณ', color: '#BA7517' },
+    { num: foreign.length, label: 'ครูต่างชาติ', color: '#185FA5' }
+  ];
+
+  stats.forEach(s => {
+    const div = document.createElement('div');
+    div.className = 'stat-card';
+    div.innerHTML = `<div class="stat-num" style="color:${s.color}">${s.num}</div><div class="stat-label">${s.label}</div>`;
+    frag.appendChild(div);
+  });
+
+  bar.innerHTML = '';
+  bar.appendChild(frag);
+}
+
+function setTeacherType(type, btn) {
+  AppState.ui.teacherType = type;
+  document.querySelectorAll('.tt-tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  renderTeachers();
+}
+
+function getInitials(name) {
+  if (!name) return '?';
+  const parts = name.trim().split(' ');
+  if (parts.length >= 2) return parts[parts.length - 2].charAt(0) + (parts[parts.length - 1] ? parts[parts.length - 1].charAt(0) : '');
+  return name.charAt(0).toUpperCase();
+}
+
+function renderTeachers() {
+  const q = document.getElementById('teacher-search').value.trim().toLowerCase();
+  
+  AppState.pool = AppState.teachers.filter(t => {
+    if (AppState.ui.teacherType !== 'all' && t.type !== AppState.ui.teacherType) return false;
+    if (q) {
+      const fullName = `${t.name} ${t.surname} ${t.code} ${t.subject} ${t.major} ${t.role} ${t.nationality || ''}`.toLowerCase();
+      return fullName.includes(q);
+    }
+    return true;
+  });
+
+  document.getElementById('teacher-count').textContent = `พบ ${AppState.pool.length} คน`;
+  const grid = document.getElementById('teacher-grid');
+  grid.innerHTML = '';
+
+  if (!AppState.pool.length) {
+    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><i class="ti ti-user-off" style="font-size:36px;display:block;margin-bottom:10px;color:#ddd"></i>ไม่พบข้อมูลครู</div>`;
+    return;
+  }
+
+  const frag = document.createDocumentFragment();
+  AppState.pool.forEach((t, i) => {
+    const avatarClass = t.type === 'retired' ? 't-avatar retired' : t.type === 'foreign' ? 't-avatar foreign' : 't-avatar';
+    const initials = t.type === 'foreign' ? t.name.split(' ').filter(w => w).map(w => w[0]).join('').slice(0, 2) : getInitials(t.name + ' ' + t.surname);
+    const badge = t.type === 'retired' ? `<span class="t-badge retired">ครูเกษียณ ${t.retiredYear || ''}</span>` : t.type === 'foreign' ? `<span class="t-badge foreign">${t.nationality || 'Foreign'}</span>` : '';
+    
+    const div = document.createElement('div');
+    div.className = 't-card';
+    div.dataset.idx = i;
+    div.innerHTML = `
+      <div class="t-card-header">
+        <div class="${avatarClass}">${initials}</div>
+        <div>
+          <div class="t-name">${esc(t.name)}${t.surname ? ' ' + esc(t.surname) : ''}</div>
+          <div class="t-code">รหัส ${t.code} • อายุ ${t.age} ปี</div>
+          ${badge}
+        </div>
+      </div>
+      <div class="t-info">
+        ${t.subject ? `<div class="t-info-row"><i class="ti ti-book"></i><span>${esc(t.subject)}${t.level ? ' (' + esc(t.level) + ')' : ''}</span></div>` : ''}
+        ${t.role ? `<div class="t-info-row"><i class="ti ti-building"></i><span>${esc(t.role)}</span></div>` : ''}
+        ${t.major ? `<div class="t-info-row"><i class="ti ti-school"></i><span>${esc(t.major)}</span></div>` : ''}
+        ${t.phone && t.phone !== '-' ? `<div class="t-info-row"><i class="ti ti-phone"></i><span>${esc(t.phone)}</span></div>` : ''}
+      </div>
+    `;
+    frag.appendChild(div);
+  });
+  grid.appendChild(frag);
+}
+
+document.getElementById('teacher-grid').addEventListener('click', function(e) {
+  const card = e.target.closest('.t-card');
+  if (!card) return;
+  const idx = parseInt(card.dataset.idx);
+  if (!isNaN(idx)) showTeacherDetail(idx);
+});
+
+function showTeacherDetail(idx) {
+  const t = AppState.pool[idx];
+  if (!t) return;
+
+  const avatarClass = t.type === 'retired' ? 'tmodal-avatar retired' : t.type === 'foreign' ? 'tmodal-avatar foreign' : 'tmodal-avatar';
+  const initials = t.type === 'foreign' ? t.name.split(' ').filter(w => w).map(w => w[0]).join('').slice(0, 2) : getInitials(t.name + ' ' + t.surname);
+  const badge = t.type === 'retired' ? `<span class="t-badge retired" style="font-size:12px;padding:4px 12px">ครูเกษียณ ${t.retiredYear || ''}</span>` : t.type === 'foreign' ? `<span class="t-badge foreign" style="font-size:12px;padding:4px 12px">${t.nationality || 'Foreign'}</span>` : '';
+  
+  const actionBtns = AppState.user ? `
+    <button class="fchip" style="display:inline-flex;align-items:center;gap:5px" onclick="openTeacherEditModal('${t.id}')"><i class="ti ti-edit"></i> แก้ไข</button>
+    <button class="fchip" style="display:inline-flex;align-items:center;gap:5px;color:#c0392b;border-color:#c0392b" onclick="closeTeacherModal();confirmDelete('${t.id}','teacher')"><i class="ti ti-trash"></i> ลบ</button>
+  ` : '';
+
+  document.getElementById('tmodal-body').innerHTML = `
+    <div class="${avatarClass}">${initials}</div>
+    <div class="tmodal-name">${esc(t.name)}${t.surname ? ' ' + esc(t.surname) : ''}</div>
+    <div class="tmodal-code">รหัส ${t.code} ${badge}</div>
+    <div style="height:0.5px;background:#eee;margin:1rem 0"></div>
+    <div class="tmodal-grid">
+      <div class="tmodal-field"><label>วุฒิการศึกษา</label><p>${esc(t.edu) || '-'}</p></div>
+      <div class="tmodal-field"><label>สาขาวิชาเอก</label><p>${esc(t.major) || '-'}</p></div>
+      <div class="tmodal-field"><label>วิชาที่สอน</label><p>${esc(t.subject) || '-'}</p></div>
+      <div class="tmodal-field"><label>ระดับชั้น</label><p>${esc(t.level) || '-'}</p></div>
+      ${t.role ? `<div class="tmodal-field full"><label>งาน/หน้าที่</label><p>${esc(t.role)}</p></div>` : ''}
+      <div class="tmodal-field"><label>อายุ</label><p>${t.age || '-'} ปี</p></div>
+      <div class="tmodal-field"><label>วันเริ่มทำงาน</label><p>${esc(t.start) || '-'}</p></div>
+      <div class="tmodal-field"><label>เบอร์โทรศัพท์</label><p>${t.phone && t.phone !== '-' ? `<a href="tel:${esc(t.phone)}" style="color:#0F6E56;text-decoration:none">${esc(t.phone)}</a>` : '-'}</p></div>
+      ${t.nationality ? `<div class="tmodal-field"><label>สัญชาติ</label><p>${esc(t.nationality)}</p></div>` : ''}
+      ${t.retiredYear ? `<div class="tmodal-field"><label>ปีที่เกษียณ</label><p>${esc(t.retiredYear)}</p></div>` : ''}
+    </div>
+  `;
+  document.getElementById('tmodal-actions').innerHTML = actionBtns;
+  document.getElementById('teacher-modal-wrap').style.display = 'block';
+}
+
+function closeTeacherModal() { document.getElementById('teacher-modal-wrap').style.display = 'none'; }
+
+function openTeacherAddModal() {
+  AppState.ui.editTeacherId = null;
+  document.getElementById('teacher-modal-title').textContent = 'เพิ่มข้อมูลครูใหม่';
+  ['tf-name','tf-surname','tf-code','tf-edu','tf-major','tf-subject','tf-level','tf-role','tf-phone','tf-start','tf-nationality','tf-retired'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
+  document.getElementById('tf-age').value = '';
+  document.getElementById('tf-type').value = 'thai';
+  toggleTeacherTypeFields('thai');
+  document.getElementById('teacher-edit-modal-wrap').style.display = 'block';
+}
+
+function openTeacherEditModal(id) {
+  closeTeacherModal();
+  const t = AppState.teachers.find(x => x.id === id);
+  if (!t) return;
+  
+  AppState.ui.editTeacherId = id;
+  document.getElementById('teacher-modal-title').textContent = 'แก้ไขข้อมูลครู';
+  document.getElementById('tf-name').value = t.name || '';
+  document.getElementById('tf-surname').value = t.surname || '';
+  document.getElementById('tf-code').value = t.code || '';
+  document.getElementById('tf-edu').value = t.edu || '';
+  document.getElementById('tf-major').value = t.major || '';
+  document.getElementById('tf-subject').value = t.subject || '';
+  document.getElementById('tf-level').value = t.level || '';
+  document.getElementById('tf-role').value = t.role || '';
+  document.getElementById('tf-age').value = t.age || '';
+  document.getElementById('tf-phone').value = t.phone || '';
+  document.getElementById('tf-start').value = t.start || '';
+  document.getElementById('tf-nationality').value = t.nationality || '';
+  document.getElementById('tf-retired').value = t.retiredYear || '';
+  document.getElementById('tf-type').value = t.type;
+  
+  toggleTeacherTypeFields(t.type);
+  document.getElementById('teacher-edit-modal-wrap').style.display = 'block';
+}
+
+function toggleTeacherTypeFields(type) {
+  document.getElementById('tf-nationality-wrap').style.display = type === 'foreign' ? 'block' : 'none';
+  document.getElementById('tf-retired-wrap').style.display = type === 'retired' ? 'block' : 'none';
+}
+
+document.getElementById('tf-type').addEventListener('change', function() { toggleTeacherTypeFields(this.value); });
+
+function closeTeacherEditModal() { 
+  document.getElementById('teacher-edit-modal-wrap').style.display = 'none'; 
+  AppState.ui.editTeacherId = null; 
+}
+
+async function saveTeacher() {
+  if (!AppState.user) return showToast('กรุณาเข้าสู่ระบบก่อน', 'error');
+
+  const name = document.getElementById('tf-name').value.trim();
+  const code = document.getElementById('tf-code').value.trim();
+  const type = document.getElementById('tf-type').value;
+  
+  if (!name || !code) return showToast('กรุณากรอกชื่อและรหัสครู', 'error');
+
+  const obj = {
+    id: AppState.ui.editTeacherId || uid(),
+    type, code, name,
+    surname: document.getElementById('tf-surname').value.trim(),
+    age: parseInt(document.getElementById('tf-age').value) || 0,
+    edu: document.getElementById('tf-edu').value.trim(),
+    major: document.getElementById('tf-major').value.trim(),
+    subject: document.getElementById('tf-subject').value.trim(),
+    level: document.getElementById('tf-level').value.trim(),
+    role: document.getElementById('tf-role').value.trim(),
+    phone: document.getElementById('tf-phone').value.trim(),
+    start: document.getElementById('tf-start').value.trim(),
+    nationality: document.getElementById('tf-nationality').value.trim(),
+    retiredYear: document.getElementById('tf-retired').value.trim(),
+  };
+
+  try {
+    await db.collection('teachers').doc(obj.id).set(obj);
+
+    if (AppState.ui.editTeacherId) {
+      AppState.teachers = AppState.teachers.map(t => t.id === AppState.ui.editTeacherId ? obj : t);
+    } else {
+      AppState.teachers.push(obj);
+    }
+    
+    closeTeacherEditModal();
+    renderTeacherStats();
+    renderTeachers();
+    showToast(AppState.ui.editTeacherId ? 'แก้ไขข้อมูลครูแล้ว ✓' : 'เพิ่มข้อมูลครูแล้ว ✓');
+  } catch (error) {
+    showToast('บันทึกข้อมูลล้มเหลว: ' + error.message, 'error');
+  }
+}
+
+// ==================== DELETION ====================
+function confirmDelete(id, type = 'event') {
+  AppState.ui.pendingDelId = { id, type };
+  document.getElementById('confirm-msg').textContent = type === 'teacher' ? 'ยืนยันการลบข้อมูลครูคนนี้?' : 'ยืนยันการลบกิจกรรมนี้?';
+  document.getElementById('confirm-wrap').style.display = 'block';
+  
+  document.getElementById('confirm-del-btn').onclick = async () => {
+    if (!AppState.user) return showToast('ไม่มีสิทธิ์ลบข้อมูล', 'error');
+    
+    try {
+      if (type === 'event') {
+        await db.collection('events').doc(id).delete();
+        AppState.events = AppState.events.filter(e => e.id !== id);
+        renderAllEvents();
+        showToast('ลบกิจกรรมแล้ว');
+      } else {
+        await db.collection('teachers').doc(id).delete();
+        AppState.teachers = AppState.teachers.filter(t => t.id !== id);
+        renderTeacherStats();
+        renderTeachers();
+        showToast('ลบข้อมูลครูแล้ว');
+      }
+    } catch (error) {
+      showToast('เกิดข้อผิดพลาด: ' + error.message, 'error');
+    }
+    closeConfirm();
+  };
+}
+
+function closeConfirm() {
+  document.getElementById('confirm-wrap').style.display = 'none';
+  AppState.ui.pendingDelId = null;
+}
+
+// ==================== NAVIGATION ====================
+function renderAllEvents() {
+  renderStats();
+  renderCalendar();
+  if (!AppState.ui.calMode) renderList();
+  renderFilters();
+}
+
+function switchPage(name, btn) {
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('page-' + name).classList.add('active');
+  
+  if (AppState.user) {
+    document.getElementById('btn-add-event').style.display = name === 'events' ? 'flex' : 'none';
+    document.getElementById('btn-add-teacher').style.display = name === 'teachers' ? 'flex' : 'none';
+  } else {
+    document.getElementById('btn-add-event').style.display = 'none';
+    document.getElementById('btn-add-teacher').style.display = 'none';
+  }
+
+  if (name === 'teachers') {
+    renderTeacherStats();
+    renderTeachers();
+  }
+}
+
+// ==================== INIT ====================
+window.onload = () => {
+  initData();
+};
+</script>
+</body>
+</html>
