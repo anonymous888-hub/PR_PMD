@@ -8,7 +8,6 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
 <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js"></script>
 
 <style>
 :root {
@@ -1287,9 +1286,18 @@ const firebaseConfig = {
 
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
-const db = firebase.firestore();
 const provider = new firebase.auth.GoogleAuthProvider();
-
+async function apiRequest(endpoint, options = {}) {
+  const headers = { 'Content-Type': 'application/json', ...(options.headers || {}) };
+  if (AppState.user) {
+    const token = await AppState.user.getIdToken();
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+  const response = await fetch(endpoint, { ...options, headers });
+  const data = await response.json();
+  if (!response.ok) throw new Error(data.error || 'เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์');
+  return data;
+}
 function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2); }
 function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
@@ -1335,12 +1343,12 @@ auth.onAuthStateChanged(user => {
 
 async function initData() {
   try {
-    const eventsSnapshot = await db.collection('events').get();
-    AppState.events = eventsSnapshot.docs.map(doc => doc.data());
-    document.getElementById('loading-overlay').style.display = 'none';
+    AppState.events = await apiRequest('/api/events');
     renderAllEvents();
   } catch (error) {
-    console.error("Error loading events:", error);
+    console.error('Error loading events:', error);
+    showToast('โหลดข้อมูลกิจกรรมไม่สำเร็จ', 'error');
+  } finally {
     document.getElementById('loading-overlay').style.display = 'none';
   }
 }
@@ -1348,13 +1356,15 @@ async function initData() {
 async function loadTeachersData() {
   if (!AppState.user) return;
   try {
-    const snap = await db.collection('teachers').get();
-    AppState.teachers = snap.docs.map(doc => doc.data());
+    AppState.teachers = await apiRequest('/api/teachers');
     if (document.getElementById('page-teachers').classList.contains('active')) {
       renderTeacherStats();
       renderTeachers();
     }
-  } catch (error) { console.error("Error loading teachers:", error); }
+  } catch (error) {
+    console.error('Error loading teachers:', error);
+    showToast(error.message, 'error');
+  }
 }
 
 function renderStats() {
@@ -1535,21 +1545,32 @@ async function saveEvent() {
   if (!name || !dept || !date) return showToast('กรุณากรอกข้อมูลที่จำเป็น', 'error');
   const endDate = document.getElementById('f-end').value;
   if (endDate && endDate < date) return showToast('วันที่สิ้นสุดต้องไม่น้อยกว่าวันที่เริ่ม', 'error');
+
   const ev = {
-    id: AppState.ui.editId || uid(), name, dept, date, endDate,
+    id: AppState.ui.editId || uid(),
+    name,
+    dept,
+    date,
+    endDate,
     desc: document.getElementById('f-desc').value.trim(),
     drive: document.getElementById('f-drive').value.trim(),
     color: AppState.ui.selColor
   };
-  try {
-    await db.collection('events').doc(ev.id).set(ev);
-    if (AppState.ui.editId) AppState.events = AppState.events.map(e => e.id===AppState.ui.editId ? ev : e);
-    else AppState.events.push(ev);
-    closeEventModal(); renderAllEvents();
-    showToast(AppState.ui.editId ? '✏️ แก้ไขกิจกรรมแล้ว' : '✅ เพิ่มกิจกรรมแล้ว');
-  } catch (error) { showToast('บันทึกข้อมูลล้มเหลว: ' + error.message, 'error'); }
-}
 
+  try {
+    await apiRequest('/api/events', { method: 'POST', body: JSON.stringify(ev) });
+    if (AppState.ui.editId) {
+      AppState.events = AppState.events.map(e => (e.id === AppState.ui.editId ? ev : e));
+    } else {
+      AppState.events.push(ev);
+    }
+    closeEventModal();
+    renderAllEvents();
+    showToast(AppState.ui.editId ? '✏️ แก้ไขกิจกรรมแล้ว' : '✅ เพิ่มกิจกรรมแล้ว');
+  } catch (error) {
+    showToast('บันทึกข้อมูลล้มเหลว: ' + error.message, 'error');
+  }
+}
 function renderTeacherStats() {
   const thai = AppState.teachers.filter(t => t.type==='thai');
   const retired = AppState.teachers.filter(t => t.type==='retired');
@@ -1727,10 +1748,14 @@ async function saveTeacher() {
   const code = document.getElementById('tf-code').value.trim();
   const type = document.getElementById('tf-type').value;
   if (!name || !code) return showToast('กรุณากรอกชื่อและรหัสครู', 'error');
+
   const obj = {
-    id: AppState.ui.editTeacherId || uid(), type, code, name,
+    id: AppState.ui.editTeacherId || uid(),
+    type,
+    code,
+    name,
     surname: document.getElementById('tf-surname').value.trim(),
-    age: parseInt(document.getElementById('tf-age').value)||0,
+    age: parseInt(document.getElementById('tf-age').value, 10) || 0,
     edu: document.getElementById('tf-edu').value.trim(),
     major: document.getElementById('tf-major').value.trim(),
     subject: document.getElementById('tf-subject').value.trim(),
@@ -1739,43 +1764,52 @@ async function saveTeacher() {
     phone: document.getElementById('tf-phone').value.trim(),
     start: document.getElementById('tf-start').value.trim(),
     nationality: document.getElementById('tf-nationality').value.trim(),
-    retiredYear: document.getElementById('tf-retired').value.trim(),
+    retiredYear: document.getElementById('tf-retired').value.trim()
   };
+
   try {
-    await db.collection('teachers').doc(obj.id).set(obj);
-    if (AppState.ui.editTeacherId) AppState.teachers = AppState.teachers.map(t => t.id===AppState.ui.editTeacherId ? obj : t);
-    else AppState.teachers.push(obj);
+    await apiRequest('/api/teachers', { method: 'POST', body: JSON.stringify(obj) });
+    if (AppState.ui.editTeacherId) {
+      AppState.teachers = AppState.teachers.map(t => (t.id === AppState.ui.editTeacherId ? obj : t));
+    } else {
+      AppState.teachers.push(obj);
+    }
     closeTeacherEditModal();
     renderTeacherStats();
     renderTeachers();
     showToast(AppState.ui.editTeacherId ? '✏️ แก้ไขข้อมูลครูแล้ว' : '✅ เพิ่มข้อมูลครูแล้ว');
-  } catch (error) { showToast('บันทึกข้อมูลล้มเหลว: ' + error.message, 'error'); }
+  } catch (error) {
+    showToast('บันทึกข้อมูลล้มเหลว: ' + error.message, 'error');
+  }
 }
-
-function confirmDelete(id, type='event') {
+function confirmDelete(id, type = 'event') {
   AppState.ui.pendingDelId = { id, type };
-  document.getElementById('confirm-msg').textContent = type==='teacher' ? 'ยืนยันการลบข้อมูลครูคนนี้?' : 'ยืนยันการลบกิจกรรมนี้?';
+  document.getElementById('confirm-msg').textContent =
+    type === 'teacher' ? 'ยืนยันการลบข้อมูลครูคนนี้?' : 'ยืนยันการลบกิจกรรมนี้?';
   document.getElementById('confirm-wrap').style.display = 'block';
+
   document.getElementById('confirm-del-btn').onclick = async () => {
     if (!AppState.user) return showToast('ไม่มีสิทธิ์ลบข้อมูล', 'error');
     try {
-      if (type==='event') {
-        await db.collection('events').doc(id).delete();
+      const endpoint = type === 'event' ? `/api/events?id=${encodeURIComponent(id)}` : `/api/teachers?id=${encodeURIComponent(id)}`;
+      await apiRequest(endpoint, { method: 'DELETE' });
+
+      if (type === 'event') {
         AppState.events = AppState.events.filter(e => e.id !== id);
         renderAllEvents();
         showToast('🗑️ ลบกิจกรรมแล้ว');
       } else {
-        await db.collection('teachers').doc(id).delete();
         AppState.teachers = AppState.teachers.filter(t => t.id !== id);
         renderTeacherStats();
         renderTeachers();
         showToast('🗑️ ลบข้อมูลครูแล้ว');
       }
-    } catch (error) { showToast('เกิดข้อผิดพลาด: ' + error.message, 'error'); }
+    } catch (error) {
+      showToast('เกิดข้อผิดพลาด: ' + error.message, 'error');
+    }
     closeConfirm();
   };
 }
-
 function closeConfirm() { document.getElementById('confirm-wrap').style.display = 'none'; AppState.ui.pendingDelId = null; }
 
 function renderAllEvents() { renderStats(); renderCalendar(); if (!AppState.ui.calMode) renderList(); renderFilters(); }
