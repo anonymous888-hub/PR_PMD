@@ -2,6 +2,6 @@
   "name": "pr-pmd-web",
   "type": "module",
   "dependencies": {
-    "@tidbcloud/serverless": "^0.1.0"
+    "@tidbcloud/serverless": "latest"
   }
 }
